@@ -1,0 +1,447 @@
+{
+  "format": "planificateur-piece",
+  "version": 4,
+  "units": "cm",
+  "exportedAt": "2026-10-23T19:39:23.331Z",
+  "wallHeight": 250,
+  "room": [
+    {
+      "x": 0,
+      "y": 13
+    },
+    {
+      "x": 308,
+      "y": 13
+    },
+    {
+      "x": 308,
+      "y": 98
+    },
+    {
+      "x": 359,
+      "y": 98
+    },
+    {
+      "x": 359,
+      "y": 0
+    },
+    {
+      "x": 579,
+      "y": 0
+    },
+    {
+      "x": 742,
+      "y": 0
+    },
+    {
+      "x": 742,
+      "y": 34
+    },
+    {
+      "x": 780,
+      "y": 34
+    },
+    {
+      "x": 780,
+      "y": 0
+    },
+    {
+      "x": 915,
+      "y": 0
+    },
+    {
+      "x": 917,
+      "y": 509
+    },
+    {
+      "x": 617,
+      "y": 509
+    },
+    {
+      "x": 617,
+      "y": 482
+    },
+    {
+      "x": 579,
+      "y": 482
+    },
+    {
+      "x": 579,
+      "y": 509
+    },
+    {
+      "x": 359,
+      "y": 509
+    },
+    {
+      "x": 359,
+      "y": 228
+    },
+    {
+      "x": 308,
+      "y": 228
+    },
+    {
+      "x": 308,
+      "y": 323
+    },
+    {
+      "x": 56,
+      "y": 323
+    },
+    {
+      "x": 56,
+      "y": 298
+    },
+    {
+      "x": 0,
+      "y": 243
+    }
+  ],
+  "wallColors": [
+    "#d5ddd5",
+    "#d5ddd5",
+    "#d5ddd5",
+    "#d5ddd5",
+    "#d5ddd5",
+    "#d5ddd5",
+    "#d5ddd5",
+    "#d5ddd5",
+    "#d5ddd5",
+    "#d5ddd5",
+    "#d5ddd5",
+    "#d5ddd5",
+    "#d5ddd5",
+    "#d5ddd5",
+    "#d5ddd5",
+    "#d5ddd5",
+    "#d5ddd5",
+    "#d5ddd5",
+    "#d5ddd5",
+    "#d5ddd5",
+    "#d5ddd5",
+    "#d5ddd5",
+    "#d5ddd5"
+  ],
+  "columns": [
+    {
+      "id": "col1",
+      "name": "Pilier rectangulaire",
+      "points": [
+        {
+          "x": 579,
+          "y": 277
+        },
+        {
+          "x": 617,
+          "y": 277
+        },
+        {
+          "x": 617,
+          "y": 311
+        },
+        {
+          "x": 579,
+          "y": 311
+        }
+      ],
+      "height": 250,
+      "elevation": 0,
+      "color": "#d5ddd5"
+    },
+    {
+      "id": "col21",
+      "name": "Colonne 22",
+      "points": [
+        {
+          "x": 620,
+          "y": 0
+        },
+        {
+          "x": 620,
+          "y": 70
+        },
+        {
+          "x": 580,
+          "y": 70
+        },
+        {
+          "x": 579,
+          "y": 0
+        }
+      ],
+      "height": 100,
+      "elevation": 0,
+      "color": "#d5ddd5"
+    },
+    {
+      "id": "col22",
+      "name": "Colonne 23",
+      "points": [
+        {
+          "x": 580,
+          "y": 110
+        },
+        {
+          "x": 620,
+          "y": 110
+        },
+        {
+          "x": 620,
+          "y": 70
+        },
+        {
+          "x": 580,
+          "y": 70
+        }
+      ],
+      "height": 250,
+      "elevation": 0,
+      "color": "#d5ddd5"
+    }
+  ],
+  "items": [
+    {
+      "id": "o1",
+      "type": "door",
+      "name": "Porte d'entrée gauche",
+      "x": -11,
+      "y": 266.5,
+      "w": 78,
+      "d": 8,
+      "rot": 45,
+      "wallIndex": 24,
+      "comment": "Position approximative d'après le plan",
+      "height": 205,
+      "elevation": 0,
+      "color": "#dce8f5"
+    },
+    {
+      "id": "o2",
+      "type": "door",
+      "name": "Porte d'entrée droite",
+      "x": 877.8603894474786,
+      "y": 214.96911438331048,
+      "w": 76,
+      "d": 8,
+      "rot": 89.77487039430623,
+      "wallIndex": 10,
+      "comment": "Position approximative d'après le plan",
+      "height": 205,
+      "elevation": 0,
+      "color": "#dce8f5"
+    },
+    {
+      "id": "o10",
+      "type": "window",
+      "name": "Fenêtre",
+      "w": 100,
+      "d": 8,
+      "x": 865.2506976474903,
+      "y": 59.802551286257405,
+      "rot": 89.77487039430623,
+      "comment": "",
+      "wallIndex": 10,
+      "height": 100,
+      "elevation": 90,
+      "color": "#b7d8e9"
+    },
+    {
+      "id": "o11",
+      "type": "window",
+      "name": "Fenêtre",
+      "w": 200,
+      "d": 8,
+      "x": 816.4889399231912,
+      "y": 374.9352104521682,
+      "rot": 89.77487039430623,
+      "comment": "",
+      "wallIndex": 10,
+      "height": 100,
+      "elevation": 90,
+      "color": "#b7d8e9"
+    },
+    {
+      "id": "o12",
+      "type": "appliance",
+      "name": "radiateur",
+      "w": 12,
+      "d": 180,
+      "x": 895,
+      "y": 290,
+      "rot": 0,
+      "comment": "",
+      "height": 85,
+      "elevation": 0,
+      "color": "#d9d9d9"
+    },
+    {
+      "id": "o13",
+      "type": "furniture",
+      "name": "Meuble TV",
+      "w": 120,
+      "d": 50,
+      "x": 130,
+      "y": 265,
+      "rot": 0,
+      "comment": "",
+      "height": 75,
+      "elevation": 0,
+      "color": "#d7e1d8"
+    },
+    {
+      "id": "o14",
+      "type": "table",
+      "name": "Table",
+      "w": 120,
+      "d": 60,
+      "x": 625,
+      "y": 445,
+      "rot": 0,
+      "comment": "",
+      "height": 75,
+      "elevation": 0,
+      "color": "#d9d9d9"
+    },
+    {
+      "id": "o16",
+      "type": "furniture",
+      "name": "Box orange",
+      "w": 45,
+      "d": 45,
+      "x": 740,
+      "y": 115,
+      "rot": 0,
+      "height": 160,
+      "elevation": 0,
+      "comment": "",
+      "color": "#d7e1d8"
+    },
+    {
+      "id": "o17",
+      "type": "table",
+      "name": "Table",
+      "w": 200,
+      "d": 80,
+      "x": 695,
+      "y": 280,
+      "rot": 0,
+      "height": 75,
+      "elevation": 0,
+      "comment": "",
+      "color": "#bda78d"
+    },
+    {
+      "id": "o18",
+      "type": "appliance",
+      "name": "radiateur ",
+      "w": 12,
+      "d": 80,
+      "x": 290,
+      "y": 240,
+      "rot": 0,
+      "comment": "",
+      "height": 85,
+      "elevation": 0,
+      "color": "#d9d9d9"
+    },
+    {
+      "id": "o19",
+      "type": "appliance",
+      "name": "radiateur",
+      "w": 12,
+      "d": 80,
+      "x": 560,
+      "y": 20,
+      "rot": 0,
+      "comment": "",
+      "height": 85,
+      "elevation": 0,
+      "color": "#d9d9d9"
+    },
+    {
+      "id": "o23",
+      "type": "furniture",
+      "name": "TV",
+      "w": 140,
+      "d": 10,
+      "x": 120,
+      "y": 290,
+      "rot": 0,
+      "comment": "",
+      "height": 75,
+      "elevation": 75,
+      "color": "#59645b"
+    },
+    {
+      "id": "o24",
+      "type": "table",
+      "name": "Table (copie)",
+      "w": 160,
+      "d": 60,
+      "x": 745,
+      "y": 445,
+      "rot": 0,
+      "comment": "",
+      "height": 75,
+      "elevation": 0,
+      "color": "#d9d9d9"
+    },
+    {
+      "id": "o25",
+      "type": "furniture",
+      "name": "Dressing",
+      "w": 140,
+      "d": 42,
+      "x": 405,
+      "y": 280,
+      "rot": 0,
+      "height": 75,
+      "elevation": 0,
+      "color": "#d9d9d9",
+      "comment": ""
+    },
+    {
+      "id": "o26",
+      "type": "table",
+      "name": " Table repassage",
+      "w": 150,
+      "d": 50,
+      "x": 385,
+      "y": 30,
+      "rot": 0,
+      "height": 75,
+      "elevation": 0,
+      "color": "#59645b",
+      "comment": ""
+    },
+    {
+      "id": "o27",
+      "type": "furniture",
+      "name": "Canapé",
+      "w": 190,
+      "d": 60,
+      "x": 85,
+      "y": 25,
+      "rot": 0,
+      "height": 40,
+      "elevation": 0,
+      "color": "#d7e1d8",
+      "comment": ""
+    },
+    {
+      "id": "o28",
+      "type": "furniture",
+      "name": "Méridienne",
+      "w": 70,
+      "d": 160,
+      "x": 15,
+      "y": 25,
+      "rot": 0,
+      "height": 40,
+      "elevation": 0,
+      "color": "#d7e1d8",
+      "comment": ""
+    }
+  ]
+}
