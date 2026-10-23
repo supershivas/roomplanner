@@ -1,6 +1,6 @@
 const $=id=>document.getElementById(id), svg=$('canvas'), wallLayer=$('walls'), objLayer=$('objects'), draftLayer=$('draft');
 const NS='http://www.w3.org/2000/svg';
-const APP_VERSION='1.1.0';
+const APP_VERSION='1.2.0';
 let state={room:[],columns:[],items:[],lights:[],wallHeight:250,wallColor:'#d5ddd5'};
 let doorRangeCheckpointed=false;
 let selected=null,selectedVertex=null,selectedWallIndex=0,selectedLightId=null,tool='select',drawing=[],history=[],future=[],drag=null,nextId=1,lastWallClick=null;
@@ -14,7 +14,12 @@ const PALETTE=[
  {name:'Bois miel',hex:'#c9a77b'}, {name:'Sable',hex:'#bda78d'},
  {name:'Chêne',hex:'#bba68b'}, {name:'Bleu pâle',hex:'#dce8f5'},
  {name:'Bleu vitrage',hex:'#b7d8e9'}, {name:'Gris clair',hex:'#d9d9d9'},
- {name:'Pierre',hex:'#b9b0a0'}, {name:'Jaune doux',hex:'#f4d9a5'}
+ {name:'Pierre',hex:'#b9b0a0'}, {name:'Jaune doux',hex:'#f4d9a5'},
+ {name:'Graphite',hex:'#45484b'}, {name:'Anthracite',hex:'#30343b'},
+ {name:'Noir mat',hex:'#252629'}, {name:'Blanc ivoire',hex:'#f2eee5'},
+ {name:'Vert forêt',hex:'#3f5f50'}, {name:'Bleu marine',hex:'#30465c'},
+ {name:'Terracotta',hex:'#bd705b'}, {name:'Rouge brique',hex:'#984f43'},
+ {name:'Rose poudré',hex:'#d4b7b2'}, {name:'Kaki',hex:'#858868'}
 ];
 function paletteColor(value,fallback){const v=String(value||'').toLowerCase();return PALETTE.some(p=>p.hex===v)?v:fallback;}
 function ensureState(){
