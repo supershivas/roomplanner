@@ -217,6 +217,7 @@ window.addEventListener('keydown', (e) => {
   const arrows = { arrowleft: [-1, 0], arrowright: [1, 0], arrowup: [0, -1], arrowdown: [0, 1] };
   if (arrows[key] && (store.selectedItem || store.selectedLight)) {
     e.preventDefault();
+    if (actions.blocked(store.ui.light || store.ui.selected)) return;
     const step = e.shiftKey ? 10 : 1;
     const [dx, dy] = arrows[key];
     store.checkpoint();

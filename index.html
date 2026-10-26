@@ -112,6 +112,7 @@
 
       <section class="block" id="props" hidden>
         <h2>Propriétés <small id="p-type-label"></small></h2>
+        <button type="button" class="btn btn-wide lock-btn" id="lockBtn"><i class="ti ti-lock"></i><span>Verrouiller</span></button>
         <label class="stack"><span>Nom</span><input type="text" id="pName" autocomplete="off"></label>
         <label class="stack" id="propTypeField"><span>Type d’objet</span><select id="pType"></select></label>
         <div class="stack" id="propColorField"><span>Couleur · <b id="pColorName"></b></span><div class="palette" id="pColorPalette" role="group" aria-label="Couleur de l’élément"></div></div>
@@ -150,6 +151,7 @@
 
       <section class="block" id="roomPanel">
         <h2>Pièce</h2>
+        <button type="button" class="btn btn-wide lock-btn" id="roomLockBtn"><i class="ti ti-lock"></i><span>Verrouiller les murs</span></button>
         <p class="hint" id="room-summary">Aucune pièce. Dessine un contour avec l’outil Murs, ou crée un rectangle.</p>
         <div class="grid2">
           <label class="stack"><span>Largeur (cm)</span><input type="number" id="roomWidth" min="50" value="500"></label>
@@ -176,6 +178,7 @@
         <p class="hint" id="emptyLightList">Aucune source personnalisée. Un éclairage de base reste actif en 3D.</p>
         <section class="subblock" id="lightProps" hidden>
           <h3>Source sélectionnée</h3>
+          <button type="button" class="btn btn-wide lock-btn" id="lightLockBtn"><i class="ti ti-lock"></i><span>Verrouiller</span></button>
           <label class="stack"><span>Nom</span><input type="text" id="pLightName" autocomplete="off"></label>
           <div class="stack"><span>Couleur · <b id="pLightColorName"></b></span><div class="palette" id="pLightColorPalette" role="group" aria-label="Couleur de la source"></div></div>
           <label class="stack"><span>Intensité (0 à 10)</span><input type="number" id="pLightIntensity" min="0" max="10" step="0.1"></label>

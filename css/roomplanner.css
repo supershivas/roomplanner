@@ -141,6 +141,11 @@ b { font-weight: 600; }
 .btn-primary { background: var(--accent); border-color: transparent; color: var(--accent-fg); }
 .btn-danger { color: var(--selected-fg); border-color: var(--selected); }
 .btn-wide { width: 100%; }
+.lock-btn { margin-bottom: 12px; }
+.lock-btn[aria-pressed="true"] { background: var(--selected); border-color: var(--accent); color: var(--selected-fg); }
+.list-item .lock { color: var(--muted); font-size: 1rem; }
+:disabled { cursor: not-allowed; }
+input:disabled, select:disabled, textarea:disabled, .swatch:disabled, .btn:disabled { opacity: 0.45; }
 
 .segmented { display: inline-flex; padding: 3px; gap: 2px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); }
 .segmented button {
@@ -258,6 +263,10 @@ dialog.modal[open] { display: flex; flex-direction: column; gap: 16px; }
 .draft-close { fill: var(--accent); fill-opacity: 0.18; stroke: var(--accent); stroke-width: 1.5; vector-effect: non-scaling-stroke; pointer-events: none; }
 .measure-line { stroke: var(--measure); stroke-width: 1.5; stroke-dasharray: 5 3; vector-effect: non-scaling-stroke; }
 .measure-dot { fill: var(--measure); stroke: #fff; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.lock-fill { fill: #fff; stroke: var(--plan-stroke); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+.lock-line { fill: none; stroke: var(--plan-stroke); stroke-width: 1.8; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.lock-badge { pointer-events: none; }
+.item[data-locked="true"], .item.locked { cursor: default; }
 .drawing.tool-wall, .drawing.tool-measure, .drawing.tool-object { cursor: crosshair; }
 .drawing.panning { cursor: grabbing; }
 

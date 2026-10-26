@@ -32,8 +32,16 @@ export const OBJECT_TYPES = {
   appliance: { label: 'Électroménager', name: 'Électroménager', w: 60, d: 60, h: 85, elev: 0, color: '#d9d9d9' },
   column: { label: 'Colonne / pilier', name: 'Colonne', w: 35, d: 35, h: 250, elev: 0, color: '#b9b0a0' },
   note: { label: 'Repère / commentaire', name: 'Repère', w: 100, d: 35, h: 2, elev: 0, color: '#f4d9a5' },
+  patio: { label: 'Porte-fenêtre', name: 'Porte-fenêtre', w: 180, d: 8, h: 215, elev: 0, color: '#b7d8e9' },
+  ironing: { label: 'Table à repasser', name: 'Table à repasser', w: 125, d: 40, h: 90, elev: 0, color: '#d9d9d9' },
+  dresser: { label: 'Commode', name: 'Commode', w: 110, d: 50, h: 85, elev: 0, color: '#bba68b' },
+  radiator: { label: 'Radiateur', name: 'Radiateur', w: 80, d: 10, h: 60, elev: 15, color: '#f2eee5' },
+  desklamp: { label: 'Lampe de bureau', name: 'Lampe de bureau', w: 20, d: 20, h: 45, elev: 0, color: '#30343b' },
 };
-export const isOpening = (it) => it.type === 'door' || it.type === 'window';
+// Ouvertures percées dans un mur : porte, fenêtre, porte-fenêtre.
+export const isOpening = (it) => it.type === 'door' || it.type === 'window' || it.type === 'patio';
+// Ouvertures vitrées : elles laissent entrer la lumière du jour.
+export const isGlazed = (it) => it.type === 'window' || it.type === 'patio';
 
 export const LIGHT_TYPES = {
   spot: { label: 'Spot directionnel', name: 'Spot', short: 'Spot' },
@@ -75,6 +83,7 @@ export function newState() {
     wallHeight: 250,
     wallColor: WALL_DEFAULT,
     floor: 'parquet',
+    roomLocked: false,
   };
 }
 
@@ -99,6 +108,7 @@ export function normalize(state) {
   state.wallHeight = num(state.wallHeight, 250) > 0 ? num(state.wallHeight, 250) : 250;
   state.wallColor = paletteColor(state.wallColor, WALL_DEFAULT);
   if (!FLOORS[state.floor]) state.floor = 'parquet';
+  state.roomLocked = state.roomLocked === true;
   for (const c of state.columns) {
     if (c.colorLinked === true) c.color = state.wallColor;
     else if (!c.color) { c.color = state.wallColor; c.colorLinked = true; } else c.color = paletteColor(c.color, state.wallColor);
@@ -292,6 +302,7 @@ export function projectForExport(state, render) {
     wallHeight: num(state.wallHeight, 250),
     wallColor: state.wallColor,
     floor: state.floor,
+    roomLocked: state.roomLocked,
     render: { ...render },
     lights: state.lights.map((l) => ({ ...l })),
     room: state.room.map((p) => ({ x: Number(p.x), y: Number(p.y) })),
@@ -304,6 +315,7 @@ export function projectForExport(state, render) {
       color: c.color || state.wallColor,
       colorLinked: c.colorLinked === true || !c.color,
       comment: String(c.comment || ''),
+      locked: c.locked === true,
     })),
     items: state.items.map((it) => ({ ...it, height: itemHeight(it), elevation: itemElevation(it) })),
   };
@@ -399,6 +411,7 @@ export function validateProject(data) {
   const state = normalize({
     room, columns, items, lights, wallHeight, wallColor,
     floor: FLOORS[data.floor] ? data.floor : 'parquet',
+    roomLocked: data.roomLocked === true,
   });
   const render = { ...defaultRender() };
   if (data.render && typeof data.render === 'object') {

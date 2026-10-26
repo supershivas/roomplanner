@@ -13,7 +13,7 @@ import { GTAOPass } from '../vendor/jsm/postprocessing/GTAOPass.js';
 import { store } from './store.js';
 import {
   WALL_THICKNESS, OBJECT_TYPES, isOpening, wallRings, wallMatch, doorSwing, itemHeight, itemElevation,
-  snapOpeningToWall, round5, clamp, bounds,
+  snapOpeningToWall, round5, clamp, bounds, isGlazed,
 } from './model.js';
 import { floorTexture, grainTexture, FLOOR_LOOK } from './textures3d.js';
 
@@ -35,7 +35,7 @@ function disposeTree(root) {
 
 export function createView3d(container, { onUnavailable } = {}) {
   let renderer; let scene; let camera; let controls; let composer; let gtao; let envTexture;
-  let content; let rig; let selectionHelper;
+  let content; let rig; let selectionHelper; let ceiling = null;
   let active = false;
   let stale = true; // le contenu doit être reconstruit à la prochaine activation
   let dirty = false;
@@ -127,6 +127,7 @@ export function createView3d(container, { onUnavailable } = {}) {
   // la lumière du soleil ne traverse pas un mur simplement parce qu'il est retiré de la vue.
   function updateShadows() {
     for (const c of cutaway) c.group.visible = true;
+    if (ceiling) ceiling.visible = true; // invisible à l'écran, mais il arrête la lumière
     renderer.shadowMap.needsUpdate = true;
     renderer.setRenderTarget(tinyTarget);
     renderer.render(scene, camera);
@@ -135,6 +136,7 @@ export function createView3d(container, { onUnavailable } = {}) {
   }
 
   function applyCutaway() {
+    if (ceiling) ceiling.visible = false;
     for (const c of cutaway) {
       const facing = (camera.position.x - c.cx) * c.ox + (camera.position.z - c.cz) * c.oz > 0;
       c.group.visible = !facing;
@@ -168,7 +170,9 @@ export function createView3d(container, { onUnavailable } = {}) {
     const color = it.color || OBJECT_TYPES[it.type].color;
     switch (it.type) {
       case 'appliance': return std(realistic, color, { roughness: 0.35, metalness: realistic ? 0.55 : 0 });
-      case 'table': case 'chair': case 'shelf':
+      case 'radiator': return std(realistic, color, { roughness: 0.38, metalness: realistic ? 0.25 : 0 });
+      case 'ironing': return std(realistic, color, { roughness: 0.9 });
+      case 'table': case 'chair': case 'shelf': case 'dresser':
         return std(realistic, color, { roughness: 0.55, map: realistic ? grainTexture() : null, clearcoat: realistic ? 0.2 : 0 });
       case 'column': return std(realistic, color, { roughness: 0.92 });
       default: return std(realistic, color, { roughness: 0.62 });
@@ -189,6 +193,7 @@ export function createView3d(container, { onUnavailable } = {}) {
     cutaway = [];
     groups = new Map();
     selectionHelper = null;
+    ceiling = null;
     const H = state.wallHeight;
 
     const flat = (x) => !realistic && x; // arêtes dessinées en mode Éditeur seulement
@@ -207,6 +212,16 @@ export function createView3d(container, { onUnavailable } = {}) {
       content.add(floor);
 
       buildWalls(H, realistic, edgeColor, shadowed, flat);
+
+      // Plafond : retiré de la vue en coupe, mais présent pour les ombres. Sans lui, le soleil et
+      // le ciel éclaireraient la pièce par le haut au lieu d'entrer par les ouvertures.
+      if (realistic) {
+        ceiling = new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshStandardMaterial({ color: 0xf6f4ef, roughness: 1, side: THREE.DoubleSide }));
+        ceiling.rotation.x = Math.PI / 2;
+        ceiling.position.y = H;
+        ceiling.castShadow = true;
+        content.add(ceiling);
+      }
     }
 
     // Colonnes (contours libres)
@@ -456,6 +471,62 @@ export function createView3d(container, { onUnavailable } = {}) {
         add(m);
         break;
       }
+      case 'ironing': {
+        const frame = std(realistic, 0x8a8f96, { roughness: 0.4, metalness: realistic ? 0.7 : 0 });
+        add(box(it.w, 3, it.d, 0, h - 1.5, 0, mat, Math.min(1.4, it.d / 4)));
+        for (const x of [-it.w * 0.26, it.w * 0.26]) {
+          for (const tilt of [0.32, -0.32]) {
+            const bar = box(1.8, (h - 3) / Math.cos(0.32), 1.8, x, (h - 3) / 2, 0, frame, 0.4);
+            bar.rotation.z = tilt;
+            add(bar);
+          }
+        }
+        add(box(it.w * 0.52, 1.5, 1.5, 0, 3, 0, frame, 0.4));
+        break;
+      }
+      case 'dresser': {
+        const metal = std(realistic, 0xb9bcc0, { roughness: 0.25, metalness: realistic ? 0.9 : 0 });
+        add(box(it.w, h, it.d, 0, h / 2, 0, mat, r));
+        const rows = 3;
+        const gap = 1.2;
+        const dh = (h - 8 - gap * (rows + 1)) / rows;
+        for (let i = 0; i < rows; i += 1) {
+          const y = 5 + gap + i * (dh + gap) + dh / 2;
+          add(box(it.w - 4, dh, 1.2, 0, y, it.d / 2 + 0.3, mat, 0.5));
+          add(box(Math.min(16, it.w * 0.2), 1.6, 1.8, 0, y, it.d / 2 + 1.6, metal, 0.5));
+        }
+        for (const x of [-it.w / 2 + 6, it.w / 2 - 6]) add(box(4, 5, 4, x, 2.5, it.d / 2 - 5, mat));
+        break;
+      }
+      case 'radiator': {
+        const fins = Math.max(3, Math.floor(it.w / 6));
+        const pitch = (it.w - 4) / fins;
+        for (let i = 0; i < fins; i += 1) add(box(Math.max(2, pitch - 1.4), h - 6, it.d, -it.w / 2 + 2 + pitch * (i + 0.5), h / 2, 0, mat, 1));
+        add(box(it.w, 3, it.d + 1, 0, h - 1.5, 0, mat, 1));
+        add(box(it.w, 3, it.d + 1, 0, 1.5, 0, mat, 1));
+        add(box(5, 5, 5, it.w / 2 - 4, 6, it.d / 2 + 1, std(realistic, 0xb9bcc0, { roughness: 0.3, metalness: realistic ? 0.8 : 0 })));
+        break;
+      }
+      case 'desklamp': {
+        const dark = std(realistic, it.color, { roughness: 0.4, metalness: realistic ? 0.5 : 0 });
+        const glow = new THREE.MeshStandardMaterial({ color: 0x333333, emissive: new THREE.Color('#ffd9a0'), emissiveIntensity: realistic ? 5 : 1.2 });
+        const baseR = Math.min(it.w, it.d) * 0.42;
+        const baseM = new THREE.Mesh(new THREE.CylinderGeometry(baseR, baseR, 2, 28), dark);
+        baseM.position.y = 1;
+        baseM.castShadow = true;
+        add(baseM);
+        const arm = box(1.3, h * 0.62, 1.3, 0, h * 0.34, 0, dark, 0.4);
+        arm.rotation.z = 0.18;
+        add(arm);
+        const head = new THREE.Mesh(new THREE.ConeGeometry(7, 9, 24, 1, true), new THREE.MeshStandardMaterial({ color: it.color, roughness: 0.5, side: THREE.DoubleSide }));
+        head.position.set(-h * 0.1, h - 8, 0);
+        head.castShadow = true;
+        add(head);
+        const bulb = new THREE.Mesh(new THREE.SphereGeometry(2.6, 14, 10), glow);
+        bulb.position.set(-h * 0.1, h - 11, 0);
+        add(bulb);
+        break;
+      }
       case 'appliance': {
         add(box(it.w, h, it.d, 0, h / 2, 0, mat, r * 1.5));
         if (realistic && it.w > 30 && it.d > 30) {
@@ -512,7 +583,7 @@ export function createView3d(container, { onUnavailable } = {}) {
       bg.set('#10141b').lerp(new THREE.Color(elevation < 12 && day > 0 ? '#8c8590' : '#dfe6ec'), clamp(day * 1.6, 0, 1));
       scene.background = bg;
       scene.environment = envTexture;
-      scene.environmentIntensity = 0.03 + 0.22 * day;
+      scene.environmentIntensity = 0.02 + 0.05 * day;
       scene.backgroundIntensity = 1;
 
       if (sunPower > 0.02) {
@@ -530,16 +601,19 @@ export function createView3d(container, { onUnavailable } = {}) {
         sun.shadow.normalBias = 1.5;
         rig.add(sun, sun.target);
       }
-      const sky = new THREE.HemisphereLight('#bcd4ee', '#8d7d6c', 0.3 * day * Math.PI);
+      const sky = new THREE.HemisphereLight('#bcd4ee', '#8d7d6c', 0.03 * day * Math.PI);
       rig.add(sky);
       // Éclairage du ciel : chaque fenêtre est une source rectangulaire tournée vers l'intérieur
       if (day > 0.02) {
         let count = 0;
         for (const it of state.items) {
-          if (it.type !== 'window' || count >= MAX_WINDOW_LIGHTS) continue;
+          if (!isGlazed(it) || count >= MAX_WINDOW_LIGHTS) continue;
           const m = wallMatch(it, state.room);
           if (!m) continue;
-          const light = new THREE.RectAreaLight(new THREE.Color('#cfe3ff').lerp(sunColor, 0.25), 1.6 * day, Math.max(10, it.w - 8), Math.max(10, itemHeight(it) - 8));
+          // Une ouverture tournée vers le soleil laisse entrer davantage de lumière.
+          const toSun = Math.max(0, -(m.inward.x * dir.x + m.inward.y * dir.z) / (Math.hypot(dir.x, dir.z) || 1));
+          const power = 5 * day * (0.5 + 0.5 * toSun) * clamp(0.35 + elevation / 40, 0.35, 1);
+          const light = new THREE.RectAreaLight(new THREE.Color('#cfe3ff').lerp(sunColor, 0.25 + 0.4 * toSun), power, Math.max(10, it.w - 8), Math.max(10, itemHeight(it) - 8));
           const cx = it.x + it.w / 2;
           const cy = it.y + it.d / 2;
           light.position.set(cx + m.inward.x * 1.5, itemElevation(it) + itemHeight(it) / 2, cy + m.inward.y * 1.5);
@@ -548,7 +622,7 @@ export function createView3d(container, { onUnavailable } = {}) {
           count += 1;
         }
       }
-      rig.add(new THREE.AmbientLight('#aab6cc', 0.05 + 0.1 * day));
+      rig.add(new THREE.AmbientLight('#aab6cc', 0.03 + 0.03 * day));
     } else {
       bg.set(cssVar('--stage-bg', '#f1f3f1'));
       scene.background = bg;
@@ -575,7 +649,8 @@ export function createView3d(container, { onUnavailable } = {}) {
       const color = new THREE.Color(src.color);
       const power = Math.max(0, Number(src.intensity) || 0);
       if (src.type === 'ambient') { rig.add(new THREE.AmbientLight(color, power * Math.PI * 0.6)); continue; }
-      const pos = new THREE.Vector3(Number(src.x) || c.x, Math.max(0, Number(src.height) || H * 0.8), Number(src.planY) || c.z);
+      const ceilingMax = realistic && state.room.length >= 3 ? H - 3 : Infinity;
+      const pos = new THREE.Vector3(Number(src.x) || c.x, Math.min(ceilingMax, Math.max(0, Number(src.height) || H * 0.8)), Number(src.planY) || c.z);
       const distance = Math.max(1, Number(src.distance) || 700);
       const castShadow = shadowCount < MAX_SHADOW_LIGHTS;
       if (castShadow) shadowCount += 1;
@@ -596,6 +671,19 @@ export function createView3d(container, { onUnavailable } = {}) {
       light.shadow.camera.near = 4;
       rig.add(light);
       rig.add(buildFixture(src, pos, color, H, realistic));
+    }
+    // Lampes de bureau posées dans le plan : elles éclairent comme une lampe ponctuelle.
+    for (const it of state.items) {
+      if (it.type !== 'desklamp') continue;
+      const lamp = new THREE.PointLight('#ffd9a0', 1.6 * LIGHT_K, 450, 2);
+      lamp.position.set(it.x + it.w / 2, itemElevation(it) + itemHeight(it) - 6, it.y + it.d / 2);
+      lamp.castShadow = shadowCount < MAX_SHADOW_LIGHTS;
+      if (lamp.castShadow) shadowCount += 1;
+      lamp.shadow.mapSize.set(512, 512);
+      lamp.shadow.bias = -0.0006;
+      lamp.shadow.normalBias = 1;
+      lamp.shadow.camera.near = 3;
+      rig.add(lamp);
     }
     rigSignature = signature();
     shadowsDirty = true;
@@ -717,6 +805,7 @@ export function createView3d(container, { onUnavailable } = {}) {
         store.setTool('select');
         store.select({ light: hit.light });
         if (!l) return;
+        if (store.isLocked(hit.light)) return;
         drag = { kind: 'light', id: hit.light, plane, start, ox: l.x, oy: l.planY, px: e.clientX, py: e.clientY, moved: false };
         return;
       }
@@ -724,6 +813,7 @@ export function createView3d(container, { onUnavailable } = {}) {
       store.select({ id: hit.id });
       const it = state.items.find((x) => x.id === hit.id);
       const col = state.columns.find((x) => x.id === hit.id);
+      if (store.isLocked(hit.id)) return;
       drag = {
         kind: it ? 'item' : 'column', id: hit.id, plane, start, ox: it?.x, oy: it?.y,
         original: col?.points.map((p) => ({ ...p })), px: e.clientX, py: e.clientY, moved: false,
@@ -770,7 +860,7 @@ export function createView3d(container, { onUnavailable } = {}) {
   // ── Synchronisation avec le plan ──
   function signature() {
     const { state, render } = store;
-    const wins = state.items.filter((i) => i.type === 'window').map((i) => [i.x, i.y, i.w, i.rot, i.height, i.elevation]);
+    const wins = state.items.filter((i) => isGlazed(i) || i.type === 'desklamp').map((i) => [i.x, i.y, i.w, i.rot, i.height, i.elevation]);
     return JSON.stringify([state.lights, state.room, state.wallHeight, render.mode, render.hour, render.daylight, render.exposure, render.softShadows, wins]);
   }
 

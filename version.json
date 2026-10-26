@@ -1,9 +1,9 @@
 {
-  "version": "1.3.0",
+  "version": "1.4.0",
   "date": "2026-10-26",
   "changes": [
-    "Rendu 3D réaliste : lumière du jour, ombres douces, lampes et spots physiques, image PNG",
-    "Nouvelle interface alignée sur les autres apps, avec menus, vues Plan / 3D et mesure",
-    "Le plan s'enregistre tout seul dans le navigateur et se met à jour automatiquement"
+    "Verrouillage des objets, des colonnes, des lumières et des murs",
+    "Nouveaux objets : porte-fenêtre, table à repasser, commode, radiateur, lampe de bureau",
+    "3D réaliste : plafond qui arrête la lumière, jour qui entre par les fenêtres et portes-fenêtres"
   ]
 }

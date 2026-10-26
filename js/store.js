@@ -97,6 +97,27 @@ export const store = {
   get selectedColumn() { return this.state.columns.find((c) => c.id === this.ui.selected) || null; },
   get selectedLight() { return this.state.lights.find((l) => l.id === this.ui.light) || null; },
 
+  // ── Verrouillage : un élément verrouillé reste sélectionnable mais ne se modifie plus ──
+  isLocked(id = this.ui.light || this.ui.selected) {
+    if (!id) return false;
+    if (id === 'room') return this.state.roomLocked === true;
+    const target = this.state.items.find((i) => i.id === id)
+      || this.state.columns.find((c) => c.id === id)
+      || this.state.lights.find((l) => l.id === id);
+    return target?.locked === true;
+  },
+  toggleLock() {
+    const id = this.ui.light || this.ui.selected;
+    if (!id) return;
+    this.checkpoint();
+    if (id === 'room') this.state.roomLocked = !this.state.roomLocked;
+    else {
+      const target = this.selectedItem || this.selectedColumn || this.selectedLight;
+      if (target) target.locked = !target.locked;
+    }
+    this.changed();
+  },
+
   // ── Rendu 3D ──
   setRender(patch, { silent = false } = {}) {
     this.render = { ...this.render, ...patch };

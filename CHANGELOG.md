@@ -1,5 +1,10 @@
 # Historique des versions
 
+## 1.4.0 — 2026-10-26
+- Verrouillage des objets, des colonnes, des lumières et des murs : ils restent sélectionnables mais ne bougent plus (cadenas sur le plan)
+- Nouveaux objets : porte-fenêtre, table à repasser, commode, radiateur, lampe de bureau (elle éclaire en 3D réaliste)
+- 3D réaliste : le plafond arrête la lumière, le jour n'entre plus que par les fenêtres et portes-fenêtres, plus vive côté soleil
+
 ## 1.3.0 — 2026-10-26
 - Rendu 3D réaliste : lumière du jour selon l'heure, ombres douces, lampes et spots physiques, ciel par les fenêtres, image PNG
 - Interface alignée sur les autres apps : menus Fichier / Édition, vues Plan et 3D, roue crantée « Réglages » avec version et nouveautés

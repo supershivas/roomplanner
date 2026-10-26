@@ -62,6 +62,27 @@ export function initPanel({ onSnapshot }) {
   });
   buildPalette('pLightColorPalette', 'pLightColorName', () => store.selectedLight?.color, (hex) => updateLight('color', hex));
 
+  // ── Verrouillage ──
+  $('lockBtn').addEventListener('click', () => store.toggleLock());
+  $('lightLockBtn').addEventListener('click', () => store.toggleLock());
+  $('roomLockBtn').addEventListener('click', () => {
+    store.checkpoint();
+    store.state.roomLocked = !store.state.roomLocked;
+    store.changed();
+  });
+  function applyLock(rootId, lockBtnId, locked) {
+    document.querySelectorAll(`#${rootId} input, #${rootId} select, #${rootId} textarea, #${rootId} button`).forEach((n) => {
+      if (n.id !== lockBtnId) n.disabled = locked;
+    });
+    const b = $(lockBtnId);
+    b.setAttribute('aria-pressed', String(locked));
+    b.querySelector('i').className = `ti ${locked ? 'ti-lock' : 'ti-lock-open'}`;
+    const label = b.querySelector('span');
+    label.textContent = lockBtnId === 'roomLockBtn'
+      ? (locked ? 'Déverrouiller les murs' : 'Verrouiller les murs')
+      : (locked ? 'Déverrouiller' : 'Verrouiller');
+  }
+
   // ── Ajout ──
   $('add-btn').addEventListener('click', () => addObjectAtCenter($('add-type').value));
   $('addLight').addEventListener('click', () => addLight($('lightTypeCreate').value));
@@ -276,9 +297,16 @@ export function initPanel({ onSnapshot }) {
     }
     palettes.forEach((refresh) => refresh());
     syncLists();
+    applyLock('props', 'lockBtn', has && !!(it || col)?.locked);
+    applyLock('roomPanel', 'roomLockBtn', state.roomLocked === true);
+    applyLock('lightProps', 'lightLockBtn', !!l?.locked);
+    if (!state.roomLocked) {
+      $('removeVertexBtn').disabled = !(ui.selected === 'room' && ui.vertex !== null && state.room.length > 3);
+      $('addVertexBtn').disabled = state.room.length < 3;
+    }
   }
 
-  function listButton(label, small, color, current, onClick) {
+  function listButton(label, small, color, current, onClick, locked = false) {
     const li = document.createElement('li');
     const b = document.createElement('button');
     b.type = 'button';
@@ -292,7 +320,9 @@ export function initPanel({ onSnapshot }) {
     name.textContent = label;
     const sm = document.createElement('small');
     sm.textContent = small;
-    b.append(dot, name, sm);
+    b.append(dot, name);
+    if (locked) { const lock = document.createElement('i'); lock.className = 'ti ti-lock lock'; lock.setAttribute('aria-label', 'Verrouillé'); b.append(lock); }
+    b.append(sm);
     b.addEventListener('click', onClick);
     li.append(b);
     return li;
@@ -301,12 +331,12 @@ export function initPanel({ onSnapshot }) {
   function syncLists() {
     const { state } = store;
     const rows = [
-      ...state.items.map((it) => listButton(it.name, `${Math.round(it.w)}×${Math.round(it.d)}`, it.color || OBJECT_TYPES[it.type].color, ui.selected === it.id, () => { store.setTool('select'); store.select({ id: it.id }); })),
-      ...state.columns.map((c) => listButton(c.name, 'contour', c.color || WALL_DEFAULT, ui.selected === c.id, () => { store.setTool('select'); store.select({ id: c.id }); })),
+      ...state.items.map((it) => listButton(it.name, `${Math.round(it.w)}×${Math.round(it.d)}`, it.color || OBJECT_TYPES[it.type].color, ui.selected === it.id, () => { store.setTool('select'); store.select({ id: it.id }); }, it.locked === true)),
+      ...state.columns.map((c) => listButton(c.name, 'contour', c.color || WALL_DEFAULT, ui.selected === c.id, () => { store.setTool('select'); store.select({ id: c.id }); }, c.locked === true)),
     ];
     $('itemList').replaceChildren(...rows);
     $('emptyList').hidden = rows.length > 0;
-    const lights = state.lights.map((l) => listButton(l.name || LIGHT_TYPES[l.type].name, LIGHT_TYPES[l.type].short, l.color || LIGHT_DEFAULT_COLOR, ui.light === l.id, () => store.select({ light: l.id })));
+    const lights = state.lights.map((l) => listButton(l.name || LIGHT_TYPES[l.type].name, LIGHT_TYPES[l.type].short, l.color || LIGHT_DEFAULT_COLOR, ui.light === l.id, () => store.select({ light: l.id }), l.locked === true));
     $('lightList').replaceChildren(...lights);
     $('emptyLightList').hidden = lights.length > 0;
   }

@@ -7,6 +7,13 @@ import {
 } from './model.js';
 import { toast, say, confirmDialog } from './dialogs.js';
 
+// Refuse de modifier un élément verrouillé (id : 'room', objet, colonne ou lumière).
+export function blocked(id) {
+  if (!store.isLocked(id)) return false;
+  toast(id === 'room' ? 'Les murs sont verrouillés.' : 'Cet élément est verrouillé.');
+  return true;
+}
+
 export function createObjectAt(center, type, { snapToWall = false } = {}) {
   const def = OBJECT_TYPES[type] || OBJECT_TYPES.furniture;
   const { state } = store;
@@ -58,6 +65,7 @@ export function duplicateSelected() {
     store.checkpoint();
     const copy = { ...it, id: store.newId('o'), name: `${it.name} (copie)`, x: it.x + 20, y: it.y + 20 };
     delete copy.wallIndex;
+    delete copy.locked;
     store.state.items.push(copy);
     store.changed();
     store.select({ id: copy.id });
@@ -67,6 +75,7 @@ export function duplicateSelected() {
   if (l) {
     store.checkpoint();
     const copy = { ...l, id: store.newId('l'), name: `${l.name} (copie)`, x: l.x + 30, planY: l.planY + 30 };
+    delete copy.locked;
     store.state.lights.push(copy);
     store.changed();
     store.select({ light: copy.id });
@@ -75,6 +84,7 @@ export function duplicateSelected() {
 
 export function deleteSelected() {
   const { state, ui } = store;
+  if (blocked(ui.light || ui.selected)) return;
   if (ui.light) {
     store.checkpoint();
     state.lights = state.lights.filter((l) => l.id !== ui.light);
@@ -98,6 +108,7 @@ export function deleteSelected() {
 }
 
 export function makeRectangle(w, h) {
+  if (blocked('room')) return;
   const width = Math.max(50, Number(w) || 500);
   const length = Math.max(50, Number(h) || 400);
   store.checkpoint();
@@ -112,6 +123,7 @@ export function makeRectangle(w, h) {
 
 export function addVertex() {
   const { state, ui } = store;
+  if (blocked('room')) return;
   if (state.room.length < 3) { toast('Crée d’abord le contour de la pièce.'); return; }
   store.checkpoint();
   const i = ui.wall % state.room.length;
@@ -126,6 +138,7 @@ export function addVertex() {
 
 export function removeVertex() {
   const { state, ui } = store;
+  if (blocked('room')) return;
   if (ui.selected !== 'room' || ui.vertex === null || state.room.length <= 3) {
     toast('Sélectionne un sommet (la pièce garde au moins 3 points).');
     return;
@@ -138,6 +151,7 @@ export function removeVertex() {
 }
 
 export function setWallLength(index, desired) {
+  if (blocked('room')) return;
   const { room } = store.state;
   if (!(desired > 0)) { toast('Saisis une longueur positive en centimètres.'); return; }
   const a = room[index];
@@ -155,8 +169,9 @@ export function setWallLength(index, desired) {
 // Un contour fermé à l'intérieur de la pièce devient une colonne, sinon il remplace la pièce.
 export function closeContour(points) {
   const { state } = store;
-  store.checkpoint();
   const inside = state.room.length >= 3 && points.every((p) => pointInPolygon(p, state.room));
+  if (!inside && state.room.length >= 3 && blocked('room')) { store.setTool('select'); return; }
+  store.checkpoint();
   if (inside) {
     const id = store.newId('col');
     state.columns.push({

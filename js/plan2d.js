@@ -4,7 +4,7 @@ import {
   OBJECT_TYPES, WALL_THICKNESS, isOpening, bounds, clamp, round5, dist, wallRings, inwardNormals,
   signedArea, interiorCenter, projectOnSegment, snapOpeningToWall, doorSwing,
 } from './model.js';
-import { createObjectAt, closeContour, setWallLength } from './actions.js';
+import { createObjectAt, closeContour, setWallLength, blocked } from './actions.js';
 import { numberDialog, say } from './dialogs.js';
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -174,7 +174,7 @@ export function createPlan2d(svg) {
 
     if (hasRoom) drawRoom(gRoom, fs, px);
     state.columns.forEach((c) => drawColumn(gCols, c, px));
-    state.items.forEach((it) => drawItem(gItems, it, fs));
+    state.items.forEach((it) => drawItem(gItems, it, fs, px));
     state.lights.forEach((l) => drawLight(gLights, l, fs, px));
     drawOverlays(gOver, fs, px);
   }
@@ -217,7 +217,12 @@ export function createPlan2d(svg) {
       t.textContent = `${fmt(area)} m²`;
     }
 
-    // Sommets
+    // Sommets (absents quand les murs sont verrouillés)
+    if (state.roomLocked) {
+      const c0 = room[0];
+      lockBadge(g, c0.x + 14 * px, c0.y - 14 * px, px);
+      return;
+    }
     room.forEach((p, i) => {
       const r = (selected ? 6 : 4) * px;
       const sel = selected && ui.vertex === i;
@@ -231,18 +236,19 @@ export function createPlan2d(svg) {
     const poly = el('polygon', { points: pts(col.points), class: `column-shape${selected ? ' selected' : ''}`, 'data-kind': 'column', 'data-id': col.id }, g);
     poly.style.fill = col.color;
     poly.style.fillOpacity = 0.85;
-    if (selected) {
+    if (col.locked) lockBadge(g, col.points[0].x, col.points[0].y, px);
+    if (selected && !col.locked) {
       col.points.forEach((p, i) => {
         el('circle', { cx: p.x, cy: p.y, r: 6 * px, class: `vertex${ui.vertex === i ? ' selected' : ''}`, 'data-kind': 'cvertex', 'data-id': col.id, 'data-index': i }, g);
       });
     }
   }
 
-  function drawItem(g, it, fs) {
+  function drawItem(g, it, fs, px) {
     const { ui } = store;
     const selected = ui.selected === it.id;
     const grp = el('g', {
-      class: `item t-${it.type}${selected ? ' selected' : ''}`,
+      class: `item t-${it.type}${selected ? ' selected' : ''}${it.locked ? ' locked' : ''}`,
       transform: `translate(${it.x} ${it.y}) rotate(${it.rot || 0} ${it.w / 2} ${it.d / 2})`,
       'data-kind': 'item', 'data-id': it.id,
     }, g);
@@ -282,6 +288,7 @@ export function createPlan2d(svg) {
         } else body(0, 0, it.w, it.d, color, 1);
         break;
       case 'door': drawDoor(grp, it, color); break;
+      case 'patio':
       case 'window': {
         body(0, 0, it.w, it.d, color, 0);
         const mid = it.d / 2;
@@ -292,18 +299,52 @@ export function createPlan2d(svg) {
         body(0, 0, it.w, it.d, color, 3);
         body(it.w * 0.15, it.d * 0.15, it.w * 0.7, it.d * 0.7, 'none', 2, 'item-detail');
         break;
+      case 'ironing':
+        body(0, 0, it.w, it.d, color, it.d / 2);
+        body(it.w * 0.08, it.d * 0.2, it.w * 0.84, it.d * 0.6, 'none', it.d * 0.3, 'item-detail');
+        break;
+      case 'dresser':
+        body(0, 0, it.w, it.d, color, 1);
+        for (let i = 1; i < 3; i += 1) el('line', { x1: (it.w * i) / 3, y1: 0, x2: (it.w * i) / 3, y2: it.d, class: 'item-detail' }, grp);
+        break;
+      case 'radiator': {
+        body(0, 0, it.w, it.d, color, 2);
+        const fins = Math.max(3, Math.floor(it.w / 8));
+        for (let i = 1; i < fins; i += 1) el('line', { x1: (it.w * i) / fins, y1: 1, x2: (it.w * i) / fins, y2: it.d - 1, class: 'item-detail' }, grp);
+        break;
+      }
+      case 'desklamp': {
+        const base = el('circle', { cx: it.w / 2, cy: it.d / 2, r: Math.min(it.w, it.d) / 2, class: 'item-body' }, grp);
+        base.style.fill = color;
+        const head = el('circle', { cx: it.w / 2, cy: it.d / 2, r: Math.min(it.w, it.d) / 5, class: 'item-detail' }, grp);
+        head.style.fill = '#fff8e0';
+        break;
+      }
       default:
         body(0, 0, it.w, it.d, color, it.type === 'note' ? 5 : 1);
     }
 
+    if (it.locked) {
+      const badge = el('g', { transform: `translate(${it.w} 0)` }, grp);
+      lockBadge(badge, 0, 0, px, -(it.rot || 0));
+    }
+
     // Nom, toujours horizontal
-    const small = Math.min(it.w, it.d) < 24 || isOpening(it);
+    const small = Math.min(it.w, it.d) < 24 || isOpening(it) || it.type === 'radiator';
     const maxChars = Math.floor(Math.max(it.w, it.d) / (fs * 0.62));
     if (!small && maxChars >= 3) {
       const label = it.name.length > maxChars ? `${it.name.slice(0, Math.max(1, maxChars - 1))}…` : it.name;
       const t = el('text', { x: it.w / 2, y: it.d / 2, 'font-size': fs, class: 'lbl', transform: `rotate(${-(it.rot || 0)} ${it.w / 2} ${it.d / 2})` }, grp);
       t.textContent = label;
     }
+  }
+
+  // Petit cadenas au trait (Tabler « lock »), à l'échelle de l'écran
+  function lockBadge(g, x, y, px, back = 0) {
+    const k = (14 * px) / 24;
+    const badge = el('g', { transform: `translate(${x} ${y}) rotate(${back}) scale(${k}) translate(-12 -12)`, class: 'lock-badge' }, g);
+    el('path', { d: 'M5 13a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z', class: 'lock-fill' }, badge);
+    el('path', { d: 'M8 11V7a4 4 0 1 1 8 0v4', class: 'lock-line' }, badge);
   }
 
   function drawDoor(grp, it, color) {
@@ -342,6 +383,7 @@ export function createPlan2d(svg) {
     body.style.fill = l.enabled ? l.color : '';
     const t = el('text', { x: 0, y: r * 3.1, 'font-size': fs * 0.9, class: 'lbl' }, grp);
     t.textContent = l.name;
+    if (l.locked) lockBadge(grp, r * 1.4, -r * 1.4, px);
   }
 
   function dimension(g, x1, y1, x2, y2, label, fs, px, vertical, rotBack, textSide = -1) {
@@ -369,7 +411,7 @@ export function createPlan2d(svg) {
       const off = 14 * px;
       dimension(grp, 0, it.d + off, it.w, it.d + off, fmt(it.w), fs, px, false, -(it.rot || 0), 1);
       dimension(grp, it.w + off, 0, it.w + off, it.d, fmt(it.d), fs, px, true, -(it.rot || 0));
-      if (!isOpening(it)) {
+      if (!isOpening(it) && !it.locked) {
         const hy = -34 * px;
         el('line', { x1: it.w / 2, y1: 0, x2: it.w / 2, y2: hy, class: 'rot-link' }, grp);
         el('circle', { cx: it.w / 2, cy: hy, r: 6 * px, class: 'rot-dot', 'data-kind': 'rot', 'data-id': it.id }, grp);
@@ -493,6 +535,8 @@ export function createPlan2d(svg) {
     } else {
       startPan(e);
     }
+    // Un élément verrouillé reste sélectionnable mais ne se déplace pas.
+    if (drag && drag.kind !== 'pan' && store.isLocked(drag.kind === 'vertex' ? 'room' : drag.id)) drag = null;
   });
 
   function nearestWallIndex(p) {
@@ -618,7 +662,7 @@ export function createPlan2d(svg) {
     if (ui.tool === 'wall') { if (draft.length >= 3) finishDraft(); return; }
     if (ui.tool !== 'select' || state.room.length < 3) return;
     const hit = hitOf(e);
-    if (hit?.dataset.kind !== 'wall') return;
+    if (hit?.dataset.kind !== 'wall' || blocked('room')) return;
     const index = nearestWallIndex(toPlan(e));
     const a = state.room[index];
     const b = state.room[(index + 1) % state.room.length];
