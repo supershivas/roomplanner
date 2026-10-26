@@ -1,16 +1,277 @@
 <!doctype html>
 <html lang="fr">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Planificateur de pièce · v1.1.0</title>
-<style>
-:root{--ink:#202521;--muted:#6e756f;--line:#dce1dc;--paper:#fff;--soft:#f5f7f4;--accent:#365c48;--accent2:#dce9df}*{box-sizing:border-box}body{margin:0;font:14px/1.45 Inter,system-ui,-apple-system,sans-serif;color:var(--ink);background:#edf0ec}.top{height:58px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:22px;padding:0 20px}.brand{font-weight:750;letter-spacing:-.03em;font-size:17px}.badge{font-size:11px;color:var(--muted);border:1px solid var(--line);padding:4px 7px;border-radius:5px}.top-actions{margin-left:auto;display:flex;gap:8px}.btn,button,select,input,textarea{font:inherit}.btn{border:1px solid #cfd6cf;background:white;border-radius:7px;padding:8px 11px;cursor:pointer;color:var(--ink)}.btn:hover{background:var(--soft)}.btn.primary{background:var(--accent);border-color:var(--accent);color:white}.btn.active{background:var(--accent2);border-color:#9cb6a3}.app{height:calc(100vh - 58px);display:grid;grid-template-columns:minmax(0,1fr) 310px}.workspace{min-width:0;display:flex;flex-direction:column}.toolbar{display:flex;align-items:center;gap:6px;padding:10px 14px;background:#f8faf7;border-bottom:1px solid var(--line);flex-wrap:wrap}.toolbar .sep{height:25px;width:1px;background:var(--line);margin:0 5px}.toolbar label{font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center}.canvas-wrap{position:relative;flex:1;min-height:0;overflow:hidden;background-color:#f0f2ef;background-image:radial-gradient(#d5dbd5 .7px,transparent .7px);background-size:14px 14px}svg#canvas{width:100%;height:100%;display:block;touch-action:none}.status{height:30px;border-top:1px solid var(--line);background:#fff;padding:5px 14px;color:var(--muted);font-size:12px}.sidebar{background:#fff;border-left:1px solid var(--line);overflow:auto}.panel{padding:17px;border-bottom:1px solid var(--line)}h2{font-size:13px;text-transform:uppercase;letter-spacing:.07em;margin:0 0 13px;color:#5d665e}.field{display:flex;flex-direction:column;gap:4px;margin:10px 0}.field span{font-size:12px;color:var(--muted)}input[type=text],input[type=number],textarea,select{width:100%;border:1px solid #d6dcd6;border-radius:6px;padding:8px;background:#fff;color:var(--ink);min-width:0}textarea{resize:vertical}.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.row{display:flex;gap:7px;align-items:center}.row>*{flex:1;min-width:0}.hint{font-size:12px;color:var(--muted);margin:9px 0 0}.itemlist{list-style:none;padding:0;margin:0}.itemlist li{display:flex;align-items:center;gap:8px;padding:8px 7px;border-radius:6px;cursor:pointer}.itemlist li:hover{background:var(--soft)}.itemlist li.selected{background:var(--accent2)}.dot{width:9px;height:9px;border-radius:2px;background:#9baea0;flex:none}.itemlist .name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.itemlist small{color:var(--muted)}.hidden{display:none!important}.object{cursor:move}.object.selected .shape{stroke:#2d7450;stroke-width:3}.vertex{cursor:move;fill:white;stroke:#2d7450;stroke-width:2}.wall{stroke:#303b33;stroke-width:5;stroke-linejoin:round;fill:#fff;fill-opacity:.45}.wall.selected{stroke:#2d7450}.empty{font-size:12px;color:var(--muted);line-height:1.5}.mini{font-size:11px}.danger{color:#a52c2c}.palette{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:5px}.color-swatch{height:25px;border:1px solid #b9c2ba;border-radius:5px;cursor:pointer;padding:0;min-width:0}.color-swatch.active{outline:2px solid var(--accent);outline-offset:1px;border-color:#fff}.color-swatch:focus-visible{outline:2px solid var(--accent);outline-offset:1px}.icon{width:16px;height:16px;display:inline-block}.notice{font-size:12px;background:#f5f8f4;border-radius:6px;padding:9px;color:#5e695f;margin-top:10px}@media(max-width:800px){.app{grid-template-columns:minmax(0,1fr) 260px}.top{padding:0 12px}.badge{display:none}}@media(max-width:600px){.app{grid-template-columns:1fr;grid-template-rows:minmax(45vh,1fr) 45vh;height:auto;min-height:calc(100vh - 58px)}.sidebar{border-left:0;border-top:1px solid var(--line)}.canvas-wrap{min-height:45vh}}
-.view3d{position:absolute;inset:0;background:#eef1ee;display:none}.view3d.active{display:block}.view3d canvas{width:100%;height:100%;display:block}.view3d .exit3d{position:absolute;top:12px;right:12px;z-index:2}.snap-badge{font-size:11px;color:#365c48;padding:4px 7px;background:#e3eee5;border-radius:5px}@media(max-width:600px){.view3d{position:absolute}}</style></head><body>
-<header class="top"><div class="brand">Planificateur</div><span class="badge" id="appVersion">v1.1.0</span><span class="badge">Éditeur de plans</span><div class="top-actions"><button class="btn" id="newBtn">Nouvelle pièce</button><button class="btn" id="importJsonBtn">Importer JSON</button><button class="btn primary" id="exportJsonBtn">Exporter JSON</button><button class="btn" id="exportBtn">Exporter SVG</button><input id="fileInput" type="file" accept=".json,.plan,application/json" hidden></div></header>
-<main class="app"><section class="workspace"><div class="toolbar"><button class="btn active" data-tool="select">↖ Sélection</button><button class="btn" data-tool="wall">⌁ Dessiner les murs</button><button class="btn" data-tool="object">＋ Ajouter un objet</button><span class="sep"></span><button class="btn" id="undoBtn">↶ Annuler</button><button class="btn" id="redoBtn">↷ Rétablir</button><span class="sep"></span><label><input id="gridToggle" type="checkbox" checked> Grille</label><button class="btn" id="fitBtn">Cadrer</button><button class="btn" id="view3dBtn">▱ Vue 3D</button><span class="snap-badge">Snap activé · Maj = murs droits</span></div><div class="canvas-wrap" id="wrap"><div id="view3d" class="view3d"><button class="btn exit3d" id="exit3d">← Retour au plan</button></div><svg id="canvas" viewBox="0 0 1628 1137" aria-label="Plan éditable"><defs><pattern id="grid" width="25" height="25" patternUnits="userSpaceOnUse"><path d="M 25 0 L 0 0 0 25" fill="none" stroke="#dce2dc" stroke-width="1"/></pattern></defs><rect id="gridBg" width="1628" height="1137" fill="url(#grid)"/><g id="walls"></g><g id="objects"></g><g id="draft"></g></svg></div><div class="status" id="status">Sélectionne un objet, dessine un contour de pièce ou ajoute un élément.</div></section>
-<aside class="sidebar"><section class="panel"><h2>Créer</h2><label class="field"><span>Type d’objet</span><select id="objectType"><option value="furniture">Meuble / bloc</option><option value="table">Table (4 pieds)</option><option value="chair">Chaise (4 pieds)</option><option value="shelf">Étagère</option><option value="door">Porte</option><option value="window">Fenêtre</option><option value="appliance">Électroménager</option><option value="column">Colonne / pilier</option><option value="note">Repère / commentaire</option></select></label><button class="btn primary" id="addObject" style="width:100%">Ajouter au plan</button><p class="hint">En mode « Dessiner les murs », clique pour placer les angles, puis clique près du premier point pour fermer la pièce. En mode sélection, double-clique sur un mur pour saisir sa longueur. En mode dessin, double-clique pour terminer un contour ouvert.</p></section>
-<section class="panel" id="roomPanel"><h2>Pièce</h2><p class="empty">Clique sur un mur pour modifier ses sommets, ou dessine une nouvelle pièce. Les dimensions sont exprimées dans les unités du plan (cm si tu utilises les valeurs par défaut).</p><div class="grid"><label class="field"><span>Largeur (cm)</span><input id="roomWidth" type="number" min="1" value="500"></label><label class="field"><span>Longueur (cm)</span><input id="roomLength" type="number" min="1" value="400"></label></div><label class="field"><span>Couleur des murs extérieurs</span><select id="wallColor"></select><div class="palette" id="wallColorPalette" aria-label="Palette des murs"></div></label><button class="btn" id="makeRect" style="width:100%">Créer une pièce rectangulaire</button><div class="row" style="margin-top:8px"><button class="btn" id="addVertexBtn">＋ Ajouter un point</button><button class="btn danger" id="removeVertexBtn">− Supprimer point</button></div><p class="hint">Pour ajouter un point, sélectionne un mur puis clique sur « Ajouter un point ». Pour le supprimer, sélectionne d’abord son sommet.</p></section>
-<section class="panel hidden" id="props"><h2>Propriétés de l’objet</h2><label class="field"><span>Nom</span><input id="pName" type="text"></label><label class="field" id="propTypeField"><span>Type d’objet</span><select id="pType"><option value="furniture">Meuble / bloc</option><option value="table">Table (4 pieds)</option><option value="chair">Chaise (4 pieds)</option><option value="shelf">Étagère</option><option value="door">Porte</option><option value="window">Fenêtre</option><option value="appliance">Électroménager</option><option value="column">Colonne / pilier</option><option value="note">Repère / commentaire</option></select></label><label class="field" id="propColorField"><span>Couleur</span><select id="pColor"></select><div class="palette" id="pColorPalette" aria-label="Palette de l’élément"></div></label><div class="grid" id="propDimensions"><label class="field"><span>Largeur (cm)</span><input id="pW" type="number" min="1"></label><label class="field"><span>Profondeur (cm)</span><input id="pD" type="number" min="1"></label></div><div class="grid" id="propPosition"><label class="field"><span>Position X (cm)</span><input id="pX" type="number"></label><label class="field"><span>Position Y (cm)</span><input id="pY" type="number"></label></div><label class="field" id="propRotation"><span>Rotation (°)</span><input id="pRot" type="number" step="15"></label><div class="grid"><label class="field"><span>Hauteur (cm)</span><input id="pH" type="number" min="1" step="1"></label><label class="field"><span>Élévation depuis le sol (cm)</span><input id="pElev" type="number" min="0" step="1" value="0"></label></div><p class="hint">La hauteur est la dimension verticale de l’élément. L’élévation est la hauteur de sa base par rapport au sol.</p>
-<section class="hidden" id="doorOptions" style="border-top:1px solid var(--line);padding-top:9px;margin-top:10px"><h2 style="margin-bottom:8px">Porte</h2><label class="field"><span>Ouverture : <strong id="pDoorOpenValue">0°</strong></span><input id="pDoorOpen" type="range" min="0" max="100" step="1" value="0"></label><div class="grid"><label class="field"><span>Sens d’ouverture</span><select id="pDoorSwing"><option value="in">Vers l’intérieur</option><option value="out">Vers l’extérieur</option></select></label><label class="field"><span>Côté des gonds</span><select id="pDoorHinge"><option value="A">Extrémité A</option><option value="B">Extrémité B</option></select></label></div><p class="hint">0–100 % correspond à une ouverture de 0 à 120°.</p></section>
-<label class="field hidden" id="columnShapeField"><span>Forme de la colonne</span><select id="pColumnShape"><option value="rect">Rectangulaire</option><option value="round">Ronde</option></select></label><label class="field" id="propCommentField"><span>Commentaire</span><textarea id="pComment" rows="3"></textarea></label><div class="row"><button class="btn" id="duplicateBtn">Dupliquer</button><button class="btn danger" id="deleteBtn">Supprimer</button></div></section>
-<section class="panel" id="lightPanel"><h2>Éclairage 3D</h2><label class="field"><span>Type de source</span><select id="lightTypeCreate"><option value="spot">Spot directionnel</option><option value="ambient">Lumière ambiante</option><option value="lamp">Lampe ponctuelle</option></select></label><button class="btn primary" id="addLight" style="width:100%">＋ Ajouter une source</button><ul class="itemlist" id="lightList" style="margin-top:8px"></ul><p class="empty" id="emptyLightList">Aucune source personnalisée. L’éclairage de base reste actif en 3D.</p><section id="lightProps" class="hidden" style="border-top:1px solid var(--line);padding-top:10px;margin-top:10px"><h2>Source sélectionnée</h2><label class="field"><span>Nom</span><input id="pLightName" type="text"></label><label class="field"><span>Couleur</span><select id="pLightColor"></select><div class="palette" id="pLightColorPalette" aria-label="Palette de la source lumineuse"></div></label><label class="field"><span>Intensité</span><input id="pLightIntensity" type="number" min="0" max="10" step="0.1"></label><label class="row" style="margin:10px 0"><input id="pLightEnabled" type="checkbox" checked style="flex:0 0 auto"><span style="font-size:12px;color:var(--muted)">Source activée</span></label><div id="lightPositionFields"><div class="grid"><label class="field"><span>Position X (cm)</span><input id="pLightX" type="number" step="5"></label><label class="field"><span>Position Y du plan (cm)</span><input id="pLightPlanY" type="number" step="5"></label></div><label class="field"><span>Hauteur de la source (cm)</span><input id="pLightHeight" type="number" min="0" step="5"></label><label class="field" id="lightDistanceField"><span>Portée (cm)</span><input id="pLightDistance" type="number" min="1" step="25"></label><label class="field" id="lightAngleField"><span>Angle du spot (°)</span><input id="pLightAngle" type="number" min="10" max="120" step="5"></label></div><div class="row"><button class="btn danger" id="deleteLightBtn">Supprimer la source</button></div></section><p class="hint">Ajoute des spots, des lampes ponctuelles ou une lumière ambiante. Les sources personnalisées sont enregistrées dans le JSON.</p></section><section class="panel"><h2>Éléments du plan</h2><ul class="itemlist" id="itemList"></ul><p class="empty" id="emptyList">Aucun objet ajouté.</p></section><section class="panel"><h2>Raccourcis</h2><p class="empty">Suppr : supprimer l’objet sélectionné<br>Échap : quitter le mode dessin<br>Ctrl/Cmd + Z : annuler<br>Glisser : déplacer un objet ou un sommet<br>Maj pendant le dessin : aligner le mur horizontalement ou verticalement<br>Vue 3D : glisser un objet pour le déplacer ; glisser le fond pour tourner ; molette pour zoomer</p><div class="notice">Dessine une pièce depuis zéro, puis passe en vue 3D. Les fenêtres créent une ouverture réelle dans les murs.</div></section></aside></main>
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script><script src="app.js"></script></body></html>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1C1C1E">
+  <meta name="apple-mobile-web-app-title" content="Roomplanner">
+  <title>Roomplanner</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon.ico" sizes="48x48">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Playfair+Display:wght@700&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="mobile.css">
+  <link rel="stylesheet" href="css/roomplanner.css">
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.min.js" } }
+  </script>
+</head>
+<body>
+  <header class="topbar safe-top">
+    <a class="brand" id="brand" href="./">Roomplanner</a>
+    <nav class="menubar" aria-label="Menu principal">
+      <div class="menubar__item">
+        <button type="button" class="menubar__trigger" id="menu-file-trigger" aria-haspopup="true" aria-expanded="false">Fichier</button>
+        <div class="menubar__dropdown" id="menu-file-dropdown" hidden role="menu">
+          <button type="button" class="menubar__action" id="menu-new" role="menuitem">Nouveau plan</button>
+          <hr class="menubar__separator">
+          <button type="button" class="menubar__action" id="menu-open" role="menuitem">Ouvrir un plan (JSON)<kbd>Ctrl+O</kbd></button>
+          <button type="button" class="menubar__action" id="menu-save" role="menuitem">Enregistrer le plan (JSON)<kbd>Ctrl+S</kbd></button>
+          <button type="button" class="menubar__action" id="menu-example" role="menuitem">Ouvrir le plan d’exemple</button>
+          <input type="file" id="open-input" accept=".json,application/json" hidden>
+          <hr class="menubar__separator">
+          <button type="button" class="menubar__action" id="menu-export-svg" role="menuitem">Exporter le plan en SVG</button>
+          <button type="button" class="menubar__action" id="menu-export-png" role="menuitem">Enregistrer l’image 3D (PNG)</button>
+        </div>
+      </div>
+      <div class="menubar__item">
+        <button type="button" class="menubar__trigger" id="menu-edit-trigger" aria-haspopup="true" aria-expanded="false">Édition</button>
+        <div class="menubar__dropdown" id="menu-edit-dropdown" hidden role="menu">
+          <button type="button" class="menubar__action" id="menu-undo" role="menuitem">Annuler<kbd>Ctrl+Z</kbd></button>
+          <button type="button" class="menubar__action" id="menu-redo" role="menuitem">Rétablir<kbd>Ctrl+Y</kbd></button>
+          <hr class="menubar__separator">
+          <button type="button" class="menubar__action" id="menu-duplicate" role="menuitem">Dupliquer l’élément<kbd>Ctrl+D</kbd></button>
+          <button type="button" class="menubar__action" id="menu-delete" role="menuitem">Supprimer l’élément<kbd>Suppr</kbd></button>
+        </div>
+      </div>
+    </nav>
+    <div class="topbar__right">
+      <button type="button" class="icon-btn" id="btn-undo" title="Annuler (Ctrl+Z)" aria-label="Annuler"><i class="ti ti-arrow-back-up"></i></button>
+      <button type="button" class="icon-btn" id="btn-redo" title="Rétablir (Ctrl+Y)" aria-label="Rétablir"><i class="ti ti-arrow-forward-up"></i></button>
+      <button type="button" class="icon-btn" id="open-settings" title="Réglages" aria-label="Réglages"><i class="ti ti-settings"></i></button>
+    </div>
+  </header>
+
+  <div class="toolbar" role="toolbar" aria-label="Vues et outils">
+    <div class="tabs" id="tabs" role="tablist" aria-label="Vues">
+      <button type="button" class="tab" role="tab" id="tab-plan" data-view="plan" aria-selected="true"><i class="ti ti-layout-board"></i><span>Plan</span></button>
+      <button type="button" class="tab" role="tab" id="tab-3d" data-view="3d" aria-selected="false"><i class="ti ti-cube"></i><span>3D</span></button>
+    </div>
+    <span class="toolbar__sep" aria-hidden="true"></span>
+    <div class="tools" id="tools" role="group" aria-label="Outils du plan">
+      <button type="button" class="tool" data-tool="select" aria-pressed="true" title="Sélection (V)"><i class="ti ti-pointer"></i><span>Sélection</span></button>
+      <button type="button" class="tool" data-tool="wall" aria-pressed="false" title="Dessiner les murs (W)"><i class="ti ti-wall"></i><span>Murs</span></button>
+      <button type="button" class="tool" data-tool="object" aria-pressed="false" title="Poser un objet au clic (O)"><i class="ti ti-square-plus"></i><span>Objet</span></button>
+      <button type="button" class="tool" data-tool="measure" aria-pressed="false" title="Mesurer (M)"><i class="ti ti-ruler-measure"></i><span>Mesure</span></button>
+    </div>
+    <span class="toolbar__sep" aria-hidden="true"></span>
+    <div class="tools" role="group" aria-label="Affichage">
+      <button type="button" class="tool" id="btn-grid" aria-pressed="true" title="Grille" aria-label="Grille"><i class="ti ti-grid-dots"></i></button>
+      <button type="button" class="tool" id="btn-fit" title="Cadrer la pièce" aria-label="Cadrer la pièce"><i class="ti ti-arrows-maximize"></i></button>
+    </div>
+  </div>
+
+  <main class="layout">
+    <section class="stage" id="stage">
+      <div class="pane" id="pane-plan">
+        <svg id="plan" class="drawing" aria-label="Plan éditable"></svg>
+        <div class="empty" id="empty">
+          <h2>Dessine ta pièce</h2>
+          <p>Pose les angles des murs un par un, ou pars d’un rectangle.</p>
+          <div class="empty__actions">
+            <button type="button" class="btn btn-primary" id="empty-draw"><i class="ti ti-wall"></i> Dessiner les murs</button>
+            <button type="button" class="btn" id="empty-rect"><i class="ti ti-square"></i> Pièce rectangulaire</button>
+            <button type="button" class="btn" id="empty-example"><i class="ti ti-folder-open"></i> Plan d’exemple</button>
+          </div>
+        </div>
+      </div>
+      <div class="pane pane-3d" id="pane-3d" hidden>
+        <div class="view3d__bar">
+          <div class="segmented" id="mode-seg" role="group" aria-label="Rendu 3D">
+            <button type="button" data-mode="standard" aria-pressed="true"><i class="ti ti-pencil"></i><span>Éditeur</span></button>
+            <button type="button" data-mode="realistic" aria-pressed="false"><i class="ti ti-sun-high"></i><span>Réaliste</span></button>
+          </div>
+          <button type="button" class="icon-btn icon-btn--panel" id="btn-reset-view" title="Recadrer la vue" aria-label="Recadrer la vue"><i class="ti ti-focus-2"></i></button>
+          <button type="button" class="icon-btn icon-btn--panel" id="btn-snapshot" title="Enregistrer l’image (PNG)" aria-label="Enregistrer l’image (PNG)"><i class="ti ti-camera"></i></button>
+        </div>
+      </div>
+      <p class="stage__hint" id="hint" role="status" aria-live="polite"></p>
+    </section>
+
+    <aside class="side" aria-label="Panneau de propriétés">
+      <section class="block">
+        <h2>Ajouter un élément</h2>
+        <div class="row">
+          <select id="add-type" aria-label="Type d’élément"></select>
+          <button type="button" class="btn" id="add-btn"><i class="ti ti-plus"></i> Ajouter</button>
+        </div>
+        <p class="hint">Clique un élément pour le sélectionner, glisse-le pour le déplacer : il s’aimante aux murs et aux autres éléments (Alt : sans aimant). Portes et fenêtres se collent aux murs.</p>
+      </section>
+
+      <section class="block" id="props" hidden>
+        <h2>Propriétés <small id="p-type-label"></small></h2>
+        <label class="stack"><span>Nom</span><input type="text" id="pName" autocomplete="off"></label>
+        <label class="stack" id="propTypeField"><span>Type d’objet</span><select id="pType"></select></label>
+        <div class="stack" id="propColorField"><span>Couleur · <b id="pColorName"></b></span><div class="palette" id="pColorPalette" role="group" aria-label="Couleur de l’élément"></div></div>
+        <div class="grid2" id="propDimensions">
+          <label class="stack"><span>Largeur (cm)</span><input type="number" id="pW" min="1"></label>
+          <label class="stack"><span>Profondeur (cm)</span><input type="number" id="pD" min="1"></label>
+        </div>
+        <div class="grid2">
+          <label class="stack"><span>Hauteur (cm)</span><input type="number" id="pH" min="1"></label>
+          <label class="stack"><span>Hauteur du bas (cm)</span><input type="number" id="pElev" min="0"></label>
+        </div>
+        <div class="grid2" id="propPosition">
+          <label class="stack"><span>Position X (cm)</span><input type="number" id="pX"></label>
+          <label class="stack"><span>Position Y (cm)</span><input type="number" id="pY"></label>
+        </div>
+        <div class="row row-rot" id="propRotation">
+          <label class="stack grow"><span>Rotation (°)</span><input type="number" id="pRot" step="15"></label>
+          <button type="button" class="btn" id="pRotMinus" aria-label="Tourner de 90° vers la gauche">−90°</button>
+          <button type="button" class="btn" id="pRotPlus" aria-label="Tourner de 90° vers la droite">+90°</button>
+        </div>
+        <section class="subblock" id="doorOptions" hidden>
+          <h3>Porte</h3>
+          <label class="stack"><span>Ouverture : <b id="pDoorOpenValue">0°</b></span><input type="range" id="pDoorOpen" min="0" max="100" step="1" value="0"></label>
+          <div class="grid2">
+            <label class="stack"><span>Sens d’ouverture</span><select id="pDoorSwing"><option value="in">Vers l’intérieur</option><option value="out">Vers l’extérieur</option></select></label>
+            <label class="stack"><span>Côté des gonds</span><select id="pDoorHinge"><option value="A">Extrémité A</option><option value="B">Extrémité B</option></select></label>
+          </div>
+        </section>
+        <label class="stack" id="columnShapeField" hidden><span>Forme de la colonne</span><select id="pColumnShape"><option value="rect">Rectangulaire</option><option value="round">Ronde</option></select></label>
+        <label class="stack" id="propCommentField"><span>Commentaire</span><textarea id="pComment" rows="3"></textarea></label>
+        <div class="row">
+          <button type="button" class="btn" id="duplicateBtn"><i class="ti ti-copy"></i> Dupliquer</button>
+          <button type="button" class="btn btn-danger" id="deleteBtn"><i class="ti ti-trash"></i> Supprimer</button>
+        </div>
+      </section>
+
+      <section class="block" id="roomPanel">
+        <h2>Pièce</h2>
+        <p class="hint" id="room-summary">Aucune pièce. Dessine un contour avec l’outil Murs, ou crée un rectangle.</p>
+        <div class="grid2">
+          <label class="stack"><span>Largeur (cm)</span><input type="number" id="roomWidth" min="50" value="500"></label>
+          <label class="stack"><span>Longueur (cm)</span><input type="number" id="roomLength" min="50" value="400"></label>
+        </div>
+        <button type="button" class="btn btn-wide" id="makeRect"><i class="ti ti-square"></i> Créer une pièce rectangulaire</button>
+        <label class="stack"><span>Hauteur sous plafond (cm)</span><input type="number" id="wallHeight" min="100" step="5"></label>
+        <div class="stack"><span>Couleur des murs · <b id="wallColorName"></b></span><div class="palette" id="wallColorPalette" role="group" aria-label="Couleur des murs"></div></div>
+        <label class="stack"><span>Sol (rendu réaliste)</span><select id="floorType"></select></label>
+        <div class="row">
+          <button type="button" class="btn" id="addVertexBtn"><i class="ti ti-plus"></i> Ajouter un point</button>
+          <button type="button" class="btn btn-danger" id="removeVertexBtn"><i class="ti ti-minus"></i> Retirer le point</button>
+        </div>
+        <p class="hint">Sélectionne un mur puis « Ajouter un point » pour le couper en deux. Double-clic sur un mur : saisir sa longueur.</p>
+      </section>
+
+      <section class="block" id="lightPanel">
+        <h2>Éclairage</h2>
+        <div class="row">
+          <select id="lightTypeCreate" aria-label="Type de source"></select>
+          <button type="button" class="btn" id="addLight"><i class="ti ti-bulb"></i> Ajouter</button>
+        </div>
+        <ul class="list" id="lightList"></ul>
+        <p class="hint" id="emptyLightList">Aucune source personnalisée. Un éclairage de base reste actif en 3D.</p>
+        <section class="subblock" id="lightProps" hidden>
+          <h3>Source sélectionnée</h3>
+          <label class="stack"><span>Nom</span><input type="text" id="pLightName" autocomplete="off"></label>
+          <div class="stack"><span>Couleur · <b id="pLightColorName"></b></span><div class="palette" id="pLightColorPalette" role="group" aria-label="Couleur de la source"></div></div>
+          <label class="stack"><span>Intensité (0 à 10)</span><input type="number" id="pLightIntensity" min="0" max="10" step="0.1"></label>
+          <label class="check"><input type="checkbox" id="pLightEnabled" checked> Source activée</label>
+          <div id="lightPositionFields">
+            <div class="grid2">
+              <label class="stack"><span>Position X (cm)</span><input type="number" id="pLightX" step="5"></label>
+              <label class="stack"><span>Position Y (cm)</span><input type="number" id="pLightPlanY" step="5"></label>
+            </div>
+            <label class="stack"><span>Hauteur de la source (cm)</span><input type="number" id="pLightHeight" min="0" step="5"></label>
+            <label class="stack" id="lightDistanceField"><span>Portée (cm)</span><input type="number" id="pLightDistance" min="1" step="25"></label>
+            <label class="stack" id="lightAngleField"><span>Ouverture du spot (°)</span><input type="number" id="pLightAngle" min="10" max="120" step="5"></label>
+          </div>
+          <button type="button" class="btn btn-danger" id="deleteLightBtn"><i class="ti ti-trash"></i> Supprimer la source</button>
+        </section>
+      </section>
+
+      <section class="block" id="renderPanel">
+        <h2>Rendu 3D</h2>
+        <div class="segmented segmented--block" id="render-mode" role="group" aria-label="Mode de rendu">
+          <button type="button" data-mode="standard" aria-pressed="true"><i class="ti ti-pencil"></i><span>Éditeur</span></button>
+          <button type="button" data-mode="realistic" aria-pressed="false"><i class="ti ti-sun-high"></i><span>Réaliste</span></button>
+        </div>
+        <div id="realistic-opts" hidden>
+          <div class="stack"><span>Ambiance</span>
+            <div class="segmented segmented--block" id="ambiance" role="group" aria-label="Ambiance">
+              <button type="button" data-ambiance="day" aria-pressed="true"><i class="ti ti-sun"></i><span>Jour</span></button>
+              <button type="button" data-ambiance="evening" aria-pressed="false"><i class="ti ti-sunset-2"></i><span>Soirée</span></button>
+              <button type="button" data-ambiance="night" aria-pressed="false"><i class="ti ti-moon"></i><span>Nuit</span></button>
+            </div>
+          </div>
+          <label class="stack"><span>Heure du soleil : <b id="hourValue"></b></span><input type="range" id="rHour" min="6" max="21" step="0.25"></label>
+          <label class="stack"><span>Lumière du jour : <b id="daylightValue"></b></span><input type="range" id="rDaylight" min="0" max="1" step="0.05"></label>
+          <label class="stack"><span>Exposition : <b id="exposureValue"></b></span><input type="range" id="rExposure" min="0.4" max="2" step="0.05"></label>
+          <label class="check"><input type="checkbox" id="rAo"> Ombres de contact (occlusion ambiante)</label>
+          <label class="check"><input type="checkbox" id="rSoft"> Ombres douces haute définition</label>
+          <button type="button" class="btn btn-wide" id="rSnapshot"><i class="ti ti-camera"></i> Enregistrer l’image (PNG)</button>
+          <p class="hint">Rendu temps réel : lumières physiques, ombres portées, éclairage du ciel par les fenêtres. Les lampes et spots du plan éclairent la scène ; le soleil entre par les ouvertures.</p>
+        </div>
+        <p class="hint" id="standard-hint">Le mode Éditeur reste rapide et lisible. Passe en Réaliste pour voir la lumière du jour, les ombres et vos sources lumineuses.</p>
+      </section>
+
+      <section class="block">
+        <h2>Éléments</h2>
+        <ul class="list" id="itemList"></ul>
+        <p class="hint" id="emptyList">Aucun objet ajouté.</p>
+      </section>
+
+      <details class="block notes">
+        <summary>Raccourcis</summary>
+        <ul>
+          <li>V : sélection · W : murs · O : poser un objet · M : mesure</li>
+          <li>Suppr : supprimer · Ctrl+D : dupliquer · Échap : quitter l’outil</li>
+          <li>Ctrl+Z / Ctrl+Y : annuler / rétablir · flèches : déplacer de 1 cm (Maj : 10 cm)</li>
+          <li>Murs : Entrée ou double-clic pour terminer, Retour arrière pour retirer le dernier point, Maj pour aligner</li>
+          <li>Plan : molette pour zoomer, glisser le fond pour se déplacer</li>
+          <li>3D : glisser un objet pour le déplacer, glisser le fond pour tourner, molette pour zoomer</li>
+        </ul>
+      </details>
+    </aside>
+  </main>
+
+  <dialog id="settings" class="modal">
+    <div class="modal-head"><h2>Réglages</h2><button class="icon-btn" data-close type="button" aria-label="Fermer"><i class="ti ti-x"></i></button></div>
+    <section class="block-s">
+      <h3>Données</h3>
+      <p class="hint">Le plan est enregistré automatiquement dans ce navigateur. Exporte-le pour le retrouver ailleurs.</p>
+      <button class="btn" id="s-import" type="button"><i class="ti ti-upload"></i> Importer un plan (JSON)</button>
+    </section>
+    <section class="block-s bottom">
+      <div class="version" id="s-version">v…</div>
+      <ul class="changelog" id="s-changelog"></ul>
+      <button class="btn" id="s-export" type="button"><i class="ti ti-download"></i> Exporter les données (JSON)</button>
+    </section>
+  </dialog>
+
+  <dialog id="confirm" class="modal modal-narrow">
+    <h2 id="confirm-title"></h2>
+    <p id="confirm-text"></p>
+    <div class="modal-foot">
+      <button class="btn" id="confirm-no" type="button">Annuler</button>
+      <button class="btn btn-primary" id="confirm-yes" type="button">Confirmer</button>
+    </div>
+  </dialog>
+
+  <dialog id="prompt" class="modal modal-narrow">
+    <h2 id="prompt-title"></h2>
+    <label class="field"><span id="prompt-label"></span><input id="prompt-input" type="text" inputmode="decimal" autocomplete="off"></label>
+    <div class="modal-foot">
+      <button class="btn" id="prompt-no" type="button">Annuler</button>
+      <button class="btn btn-primary" id="prompt-yes" type="button">Valider</button>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" popover="manual" role="status"></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
