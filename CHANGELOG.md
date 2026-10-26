@@ -1,5 +1,10 @@
 # Historique des versions
 
+## 1.5.0 — 2026-10-26
+- Le panneau de droite n'affiche plus que les propriétés de la sélection (objet, colonne, lumière ou pièce) ; sans sélection, le plan prend toute la largeur
+- Barre d'outils : « Ajouter » (catalogue avec icônes), « Pièce » et « Éléments » (liste) ; réglages du rendu dans la vue 3D ; menu Aide avec les raccourcis
+- Couleurs en palette flottante, champs sur trois colonnes, options rares repliées ; sur mobile, feuille en bas de l'écran
+
 ## 1.4.0 — 2026-10-26
 - Verrouillage des objets, des colonnes, des lumières et des murs : ils restent sélectionnables mais ne bougent plus (cadenas sur le plan)
 - Nouveaux objets : porte-fenêtre, table à repasser, commode, radiateur, lampe de bureau (elle éclaire en 3D réaliste)

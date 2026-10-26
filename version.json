@@ -1,9 +1,9 @@
 {
-  "version": "1.4.0",
+  "version": "1.5.0",
   "date": "2026-10-26",
   "changes": [
-    "Verrouillage des objets, des colonnes, des lumières et des murs",
-    "Nouveaux objets : porte-fenêtre, table à repasser, commode, radiateur, lampe de bureau",
-    "3D réaliste : plafond qui arrête la lumière, jour qui entre par les fenêtres et portes-fenêtres"
+    "Panneau de droite réduit aux propriétés de la sélection, sans barre de défilement",
+    "Boutons Ajouter, Pièce et Éléments dans la barre d'outils ; réglages du rendu dans la vue 3D",
+    "Sur mobile, les propriétés s'ouvrent en feuille depuis le bas"
   ]
 }

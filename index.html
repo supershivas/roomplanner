@@ -46,6 +46,12 @@
           <button type="button" class="menubar__action" id="menu-delete" role="menuitem">Supprimer l’élément<kbd>Suppr</kbd></button>
         </div>
       </div>
+      <div class="menubar__item">
+        <button type="button" class="menubar__trigger" id="menu-help-trigger" aria-haspopup="true" aria-expanded="false">Aide</button>
+        <div class="menubar__dropdown" id="menu-help-dropdown" hidden role="menu">
+          <button type="button" class="menubar__action" id="menu-shortcuts" role="menuitem">Raccourcis clavier</button>
+        </div>
+      </div>
     </nav>
     <div class="topbar__right">
       <button type="button" class="icon-btn" id="btn-undo" title="Annuler (Ctrl+Z)" aria-label="Annuler"><i class="ti ti-arrow-back-up"></i></button>
@@ -65,6 +71,12 @@
       <button type="button" class="tool" data-tool="wall" aria-pressed="false" title="Dessiner les murs (W)"><i class="ti ti-wall"></i><span>Murs</span></button>
       <button type="button" class="tool" data-tool="object" aria-pressed="false" title="Poser un objet au clic (O)"><i class="ti ti-square-plus"></i><span>Objet</span></button>
       <button type="button" class="tool" data-tool="measure" aria-pressed="false" title="Mesurer (M)"><i class="ti ti-ruler-measure"></i><span>Mesure</span></button>
+    </div>
+    <span class="toolbar__sep" aria-hidden="true"></span>
+    <div class="tools" role="group" aria-label="Contenu">
+      <button type="button" class="tool tool--primary" id="btn-add" data-pop="pop-add" aria-haspopup="true" title="Ajouter un élément ou une lumière"><i class="ti ti-plus"></i><span>Ajouter</span></button>
+      <button type="button" class="tool" id="btn-room" title="Propriétés de la pièce et des murs"><i class="ti ti-home-2"></i><span>Pièce</span></button>
+      <button type="button" class="tool" id="btn-list" data-pop="pop-list" aria-haspopup="true" title="Liste des éléments"><i class="ti ti-list"></i><span>Éléments</span></button>
     </div>
     <span class="toolbar__sep" aria-hidden="true"></span>
     <div class="tools" role="group" aria-label="Affichage">
@@ -93,6 +105,7 @@
             <button type="button" data-mode="standard" aria-pressed="true"><i class="ti ti-pencil"></i><span>Éditeur</span></button>
             <button type="button" data-mode="realistic" aria-pressed="false"><i class="ti ti-sun-high"></i><span>Réaliste</span></button>
           </div>
+          <button type="button" class="icon-btn icon-btn--panel" id="btn-render" data-pop="pop-render" aria-haspopup="true" title="Réglages du rendu" aria-label="Réglages du rendu"><i class="ti ti-adjustments"></i></button>
           <button type="button" class="icon-btn icon-btn--panel" id="btn-reset-view" title="Recadrer la vue" aria-label="Recadrer la vue"><i class="ti ti-focus-2"></i></button>
           <button type="button" class="icon-btn icon-btn--panel" id="btn-snapshot" title="Enregistrer l’image (PNG)" aria-label="Enregistrer l’image (PNG)"><i class="ti ti-camera"></i></button>
         </div>
@@ -100,146 +113,152 @@
       <p class="stage__hint" id="hint" role="status" aria-live="polite"></p>
     </section>
 
-    <aside class="side" aria-label="Panneau de propriétés">
-      <section class="block">
-        <h2>Ajouter un élément</h2>
-        <div class="row">
-          <select id="add-type" aria-label="Type d’élément"></select>
-          <button type="button" class="btn" id="add-btn"><i class="ti ti-plus"></i> Ajouter</button>
-        </div>
-        <p class="hint">Clique un élément pour le sélectionner, glisse-le pour le déplacer : il s’aimante aux murs et aux autres éléments (Alt : sans aimant). Portes et fenêtres se collent aux murs.</p>
-      </section>
-
-      <section class="block" id="props" hidden>
-        <h2>Propriétés <small id="p-type-label"></small></h2>
-        <button type="button" class="btn btn-wide lock-btn" id="lockBtn"><i class="ti ti-lock"></i><span>Verrouiller</span></button>
+    <aside class="side" id="inspector" aria-label="Propriétés de la sélection" hidden>
+      <!-- Objet ou colonne -->
+      <section class="ins" id="props" hidden>
+        <header class="ins__head">
+          <div class="ins__title"><span id="p-type-label"></span></div>
+          <button type="button" class="icon-btn lock-btn" id="lockBtn" aria-label="Verrouiller" title="Verrouiller"><i class="ti ti-lock-open"></i></button>
+          <button type="button" class="icon-btn" id="duplicateBtn" aria-label="Dupliquer" title="Dupliquer"><i class="ti ti-copy"></i></button>
+          <button type="button" class="icon-btn icon-btn--danger" id="deleteBtn" aria-label="Supprimer" title="Supprimer"><i class="ti ti-trash"></i></button>
+        </header>
         <label class="stack"><span>Nom</span><input type="text" id="pName" autocomplete="off"></label>
-        <label class="stack" id="propTypeField"><span>Type d’objet</span><select id="pType"></select></label>
-        <div class="stack" id="propColorField"><span>Couleur · <b id="pColorName"></b></span><div class="palette" id="pColorPalette" role="group" aria-label="Couleur de l’élément"></div></div>
-        <div class="grid2" id="propDimensions">
-          <label class="stack"><span>Largeur (cm)</span><input type="number" id="pW" min="1"></label>
-          <label class="stack"><span>Profondeur (cm)</span><input type="number" id="pD" min="1"></label>
+        <div class="stack" id="propColorField"><span>Couleur</span><button type="button" class="color-btn" id="pColorBtn" aria-haspopup="true"><i class="color-btn__dot"></i><span class="color-btn__name"></span><i class="ti ti-chevron-down"></i></button></div>
+        <div class="grid3" id="propDimensions">
+          <label class="stack"><span>Largeur</span><input type="number" id="pW" min="1"></label>
+          <label class="stack"><span>Profond.</span><input type="number" id="pD" min="1"></label>
+          <label class="stack"><span>Hauteur</span><input type="number" id="pH" min="1"></label>
         </div>
-        <div class="grid2">
-          <label class="stack"><span>Hauteur (cm)</span><input type="number" id="pH" min="1"></label>
-          <label class="stack"><span>Hauteur du bas (cm)</span><input type="number" id="pElev" min="0"></label>
+        <div class="grid3" id="propPosition">
+          <label class="stack"><span>X</span><input type="number" id="pX"></label>
+          <label class="stack"><span>Y</span><input type="number" id="pY"></label>
+          <label class="stack"><span>Rotation °</span><input type="number" id="pRot" step="15"></label>
         </div>
-        <div class="grid2" id="propPosition">
-          <label class="stack"><span>Position X (cm)</span><input type="number" id="pX"></label>
-          <label class="stack"><span>Position Y (cm)</span><input type="number" id="pY"></label>
-        </div>
-        <div class="row row-rot" id="propRotation">
-          <label class="stack grow"><span>Rotation (°)</span><input type="number" id="pRot" step="15"></label>
-          <button type="button" class="btn" id="pRotMinus" aria-label="Tourner de 90° vers la gauche">−90°</button>
-          <button type="button" class="btn" id="pRotPlus" aria-label="Tourner de 90° vers la droite">+90°</button>
+        <div class="grid3">
+          <label class="stack"><span>Hauteur du bas</span><input type="number" id="pElev" min="0"></label>
+          <div class="stack" id="propRotation"><span>Tourner</span>
+            <div class="pair"><button type="button" class="btn btn-sq" id="pRotMinus" aria-label="Tourner de 90° vers la gauche" title="−90°"><i class="ti ti-rotate-2"></i></button><button type="button" class="btn btn-sq" id="pRotPlus" aria-label="Tourner de 90° vers la droite" title="+90°"><i class="ti ti-rotate-clockwise-2"></i></button></div>
+          </div>
         </div>
         <section class="subblock" id="doorOptions" hidden>
-          <h3>Porte</h3>
-          <label class="stack"><span>Ouverture : <b id="pDoorOpenValue">0°</b></span><input type="range" id="pDoorOpen" min="0" max="100" step="1" value="0"></label>
+          <label class="stack"><span>Ouverture de la porte : <b id="pDoorOpenValue">0°</b></span><input type="range" id="pDoorOpen" min="0" max="100" step="1" value="0"></label>
           <div class="grid2">
-            <label class="stack"><span>Sens d’ouverture</span><select id="pDoorSwing"><option value="in">Vers l’intérieur</option><option value="out">Vers l’extérieur</option></select></label>
-            <label class="stack"><span>Côté des gonds</span><select id="pDoorHinge"><option value="A">Extrémité A</option><option value="B">Extrémité B</option></select></label>
+            <label class="stack"><span>Sens</span><select id="pDoorSwing"><option value="in">Vers l’intérieur</option><option value="out">Vers l’extérieur</option></select></label>
+            <label class="stack"><span>Gonds</span><select id="pDoorHinge"><option value="A">Extrémité A</option><option value="B">Extrémité B</option></select></label>
           </div>
         </section>
-        <label class="stack" id="columnShapeField" hidden><span>Forme de la colonne</span><select id="pColumnShape"><option value="rect">Rectangulaire</option><option value="round">Ronde</option></select></label>
-        <label class="stack" id="propCommentField"><span>Commentaire</span><textarea id="pComment" rows="3"></textarea></label>
-        <div class="row">
-          <button type="button" class="btn" id="duplicateBtn"><i class="ti ti-copy"></i> Dupliquer</button>
-          <button type="button" class="btn btn-danger" id="deleteBtn"><i class="ti ti-trash"></i> Supprimer</button>
-        </div>
+        <details class="more">
+          <summary>Plus d’options</summary>
+          <label class="stack" id="propTypeField"><span>Type d’objet</span><select id="pType"></select></label>
+          <label class="stack" id="columnShapeField" hidden><span>Forme de la colonne</span><select id="pColumnShape"><option value="rect">Rectangulaire</option><option value="round">Ronde</option></select></label>
+          <label class="stack" id="propCommentField"><span>Commentaire</span><textarea id="pComment" rows="2"></textarea></label>
+        </details>
       </section>
 
-      <section class="block" id="roomPanel">
-        <h2>Pièce</h2>
-        <button type="button" class="btn btn-wide lock-btn" id="roomLockBtn"><i class="ti ti-lock"></i><span>Verrouiller les murs</span></button>
-        <p class="hint" id="room-summary">Aucune pièce. Dessine un contour avec l’outil Murs, ou crée un rectangle.</p>
+      <!-- Lumière -->
+      <section class="ins" id="lightProps" hidden>
+        <header class="ins__head">
+          <div class="ins__title"><span id="light-type-label"></span></div>
+          <button type="button" class="icon-btn lock-btn" id="lightLockBtn" aria-label="Verrouiller" title="Verrouiller"><i class="ti ti-lock-open"></i></button>
+          <button type="button" class="icon-btn" id="lightDupBtn" aria-label="Dupliquer" title="Dupliquer"><i class="ti ti-copy"></i></button>
+          <button type="button" class="icon-btn icon-btn--danger" id="deleteLightBtn" aria-label="Supprimer" title="Supprimer"><i class="ti ti-trash"></i></button>
+        </header>
+        <label class="stack"><span>Nom</span><input type="text" id="pLightName" autocomplete="off"></label>
+        <div class="stack"><span>Couleur</span><button type="button" class="color-btn" id="pLightColorBtn" aria-haspopup="true"><i class="color-btn__dot"></i><span class="color-btn__name"></span><i class="ti ti-chevron-down"></i></button></div>
         <div class="grid2">
-          <label class="stack"><span>Largeur (cm)</span><input type="number" id="roomWidth" min="50" value="500"></label>
-          <label class="stack"><span>Longueur (cm)</span><input type="number" id="roomLength" min="50" value="400"></label>
-        </div>
-        <button type="button" class="btn btn-wide" id="makeRect"><i class="ti ti-square"></i> Créer une pièce rectangulaire</button>
-        <label class="stack"><span>Hauteur sous plafond (cm)</span><input type="number" id="wallHeight" min="100" step="5"></label>
-        <div class="stack"><span>Couleur des murs · <b id="wallColorName"></b></span><div class="palette" id="wallColorPalette" role="group" aria-label="Couleur des murs"></div></div>
-        <label class="stack"><span>Sol (rendu réaliste)</span><select id="floorType"></select></label>
-        <div class="row">
-          <button type="button" class="btn" id="addVertexBtn"><i class="ti ti-plus"></i> Ajouter un point</button>
-          <button type="button" class="btn btn-danger" id="removeVertexBtn"><i class="ti ti-minus"></i> Retirer le point</button>
-        </div>
-        <p class="hint">Sélectionne un mur puis « Ajouter un point » pour le couper en deux. Double-clic sur un mur : saisir sa longueur.</p>
-      </section>
-
-      <section class="block" id="lightPanel">
-        <h2>Éclairage</h2>
-        <div class="row">
-          <select id="lightTypeCreate" aria-label="Type de source"></select>
-          <button type="button" class="btn" id="addLight"><i class="ti ti-bulb"></i> Ajouter</button>
-        </div>
-        <ul class="list" id="lightList"></ul>
-        <p class="hint" id="emptyLightList">Aucune source personnalisée. Un éclairage de base reste actif en 3D.</p>
-        <section class="subblock" id="lightProps" hidden>
-          <h3>Source sélectionnée</h3>
-          <button type="button" class="btn btn-wide lock-btn" id="lightLockBtn"><i class="ti ti-lock"></i><span>Verrouiller</span></button>
-          <label class="stack"><span>Nom</span><input type="text" id="pLightName" autocomplete="off"></label>
-          <div class="stack"><span>Couleur · <b id="pLightColorName"></b></span><div class="palette" id="pLightColorPalette" role="group" aria-label="Couleur de la source"></div></div>
           <label class="stack"><span>Intensité (0 à 10)</span><input type="number" id="pLightIntensity" min="0" max="10" step="0.1"></label>
-          <label class="check"><input type="checkbox" id="pLightEnabled" checked> Source activée</label>
-          <div id="lightPositionFields">
-            <div class="grid2">
-              <label class="stack"><span>Position X (cm)</span><input type="number" id="pLightX" step="5"></label>
-              <label class="stack"><span>Position Y (cm)</span><input type="number" id="pLightPlanY" step="5"></label>
-            </div>
-            <label class="stack"><span>Hauteur de la source (cm)</span><input type="number" id="pLightHeight" min="0" step="5"></label>
-            <label class="stack" id="lightDistanceField"><span>Portée (cm)</span><input type="number" id="pLightDistance" min="1" step="25"></label>
-            <label class="stack" id="lightAngleField"><span>Ouverture du spot (°)</span><input type="number" id="pLightAngle" min="10" max="120" step="5"></label>
-          </div>
-          <button type="button" class="btn btn-danger" id="deleteLightBtn"><i class="ti ti-trash"></i> Supprimer la source</button>
-        </section>
-      </section>
-
-      <section class="block" id="renderPanel">
-        <h2>Rendu 3D</h2>
-        <div class="segmented segmented--block" id="render-mode" role="group" aria-label="Mode de rendu">
-          <button type="button" data-mode="standard" aria-pressed="true"><i class="ti ti-pencil"></i><span>Éditeur</span></button>
-          <button type="button" data-mode="realistic" aria-pressed="false"><i class="ti ti-sun-high"></i><span>Réaliste</span></button>
+          <label class="check"><input type="checkbox" id="pLightEnabled" checked> Allumée</label>
         </div>
-        <div id="realistic-opts" hidden>
-          <div class="stack"><span>Ambiance</span>
-            <div class="segmented segmented--block" id="ambiance" role="group" aria-label="Ambiance">
-              <button type="button" data-ambiance="day" aria-pressed="true"><i class="ti ti-sun"></i><span>Jour</span></button>
-              <button type="button" data-ambiance="evening" aria-pressed="false"><i class="ti ti-sunset-2"></i><span>Soirée</span></button>
-              <button type="button" data-ambiance="night" aria-pressed="false"><i class="ti ti-moon"></i><span>Nuit</span></button>
-            </div>
+        <div id="lightPositionFields">
+          <div class="grid3">
+            <label class="stack"><span>X</span><input type="number" id="pLightX" step="5"></label>
+            <label class="stack"><span>Y</span><input type="number" id="pLightPlanY" step="5"></label>
+            <label class="stack"><span>Hauteur</span><input type="number" id="pLightHeight" min="0" step="5"></label>
           </div>
-          <label class="stack"><span>Heure du soleil : <b id="hourValue"></b></span><input type="range" id="rHour" min="6" max="21" step="0.25"></label>
-          <label class="stack"><span>Lumière du jour : <b id="daylightValue"></b></span><input type="range" id="rDaylight" min="0" max="1" step="0.05"></label>
-          <label class="stack"><span>Exposition : <b id="exposureValue"></b></span><input type="range" id="rExposure" min="0.4" max="2" step="0.05"></label>
-          <label class="check"><input type="checkbox" id="rAo"> Ombres de contact (occlusion ambiante)</label>
-          <label class="check"><input type="checkbox" id="rSoft"> Ombres douces haute définition</label>
-          <button type="button" class="btn btn-wide" id="rSnapshot"><i class="ti ti-camera"></i> Enregistrer l’image (PNG)</button>
-          <p class="hint">Rendu temps réel : lumières physiques, ombres portées, éclairage du ciel par les fenêtres. Les lampes et spots du plan éclairent la scène ; le soleil entre par les ouvertures.</p>
+          <div class="grid2">
+            <label class="stack" id="lightDistanceField"><span>Portée</span><input type="number" id="pLightDistance" min="1" step="25"></label>
+            <label class="stack" id="lightAngleField"><span>Ouverture °</span><input type="number" id="pLightAngle" min="10" max="120" step="5"></label>
+          </div>
         </div>
-        <p class="hint" id="standard-hint">Le mode Éditeur reste rapide et lisible. Passe en Réaliste pour voir la lumière du jour, les ombres et vos sources lumineuses.</p>
       </section>
 
-      <section class="block">
-        <h2>Éléments</h2>
-        <ul class="list" id="itemList"></ul>
-        <p class="hint" id="emptyList">Aucun objet ajouté.</p>
+      <!-- Pièce et murs -->
+      <section class="ins" id="roomPanel" hidden>
+        <header class="ins__head">
+          <div class="ins__title"><span>Pièce et murs</span></div>
+          <button type="button" class="icon-btn lock-btn" id="roomLockBtn" aria-label="Verrouiller les murs" title="Verrouiller les murs"><i class="ti ti-lock-open"></i></button>
+        </header>
+        <p class="hint" id="room-summary"></p>
+        <div id="roomCreate">
+          <div class="grid2">
+            <label class="stack"><span>Largeur (cm)</span><input type="number" id="roomWidth" min="50" value="500"></label>
+            <label class="stack"><span>Longueur (cm)</span><input type="number" id="roomLength" min="50" value="400"></label>
+          </div>
+          <button type="button" class="btn btn-wide" id="makeRect"><i class="ti ti-square"></i> Créer une pièce rectangulaire</button>
+        </div>
+        <div class="grid2">
+          <label class="stack"><span>Hauteur plafond</span><input type="number" id="wallHeight" min="100" step="5"></label>
+          <label class="stack"><span>Sol (rendu réaliste)</span><select id="floorType"></select></label>
+        </div>
+        <div class="stack"><span>Couleur des murs</span><button type="button" class="color-btn" id="wallColorBtn" aria-haspopup="true"><i class="color-btn__dot"></i><span class="color-btn__name"></span><i class="ti ti-chevron-down"></i></button></div>
+        <div class="grid2">
+          <button type="button" class="btn" id="addVertexBtn"><i class="ti ti-plus"></i> Point</button>
+          <button type="button" class="btn btn-danger" id="removeVertexBtn"><i class="ti ti-minus"></i> Point</button>
+        </div>
+        <p class="hint">Sélectionne un mur puis « + Point » pour le couper en deux. Double-clic sur un mur : saisir sa longueur.</p>
       </section>
-
-      <details class="block notes">
-        <summary>Raccourcis</summary>
-        <ul>
-          <li>V : sélection · W : murs · O : poser un objet · M : mesure</li>
-          <li>Suppr : supprimer · Ctrl+D : dupliquer · Échap : quitter l’outil</li>
-          <li>Ctrl+Z / Ctrl+Y : annuler / rétablir · flèches : déplacer de 1 cm (Maj : 10 cm)</li>
-          <li>Murs : Entrée ou double-clic pour terminer, Retour arrière pour retirer le dernier point, Maj pour aligner</li>
-          <li>Plan : molette pour zoomer, glisser le fond pour se déplacer</li>
-          <li>3D : glisser un objet pour le déplacer, glisser le fond pour tourner, molette pour zoomer</li>
-        </ul>
-      </details>
     </aside>
   </main>
+
+  <!-- Fenêtres déroulantes -->
+  <div class="pop" id="pop-add" hidden>
+    <h3>Éléments</h3>
+    <div class="catalog" id="catalog-items"></div>
+    <h3>Lumières</h3>
+    <div class="catalog" id="catalog-lights"></div>
+    <p class="hint">« Objet » dans la barre d’outils pose le dernier élément choisi d’un clic sur le plan.</p>
+  </div>
+  <div class="pop pop--list" id="pop-list" hidden>
+    <h3>Éléments du plan</h3>
+    <ul class="list" id="itemList"></ul>
+    <h3>Lumières</h3>
+    <ul class="list" id="lightList"></ul>
+    <p class="hint" id="emptyList">Rien n’a encore été ajouté.</p>
+  </div>
+  <div class="pop pop--render" id="pop-render" hidden>
+    <h3>Rendu 3D</h3>
+    <div id="realistic-opts" hidden>
+      <div class="stack"><span>Ambiance</span>
+        <div class="segmented segmented--block" id="ambiance" role="group" aria-label="Ambiance">
+          <button type="button" data-ambiance="day" aria-pressed="true"><i class="ti ti-sun"></i><span>Jour</span></button>
+          <button type="button" data-ambiance="evening" aria-pressed="false"><i class="ti ti-sunset-2"></i><span>Soirée</span></button>
+          <button type="button" data-ambiance="night" aria-pressed="false"><i class="ti ti-moon"></i><span>Nuit</span></button>
+        </div>
+      </div>
+      <label class="stack"><span>Heure du soleil : <b id="hourValue"></b></span><input type="range" id="rHour" min="6" max="21" step="0.25"></label>
+      <label class="stack"><span>Lumière du jour : <b id="daylightValue"></b></span><input type="range" id="rDaylight" min="0" max="1" step="0.05"></label>
+      <label class="stack"><span>Exposition : <b id="exposureValue"></b></span><input type="range" id="rExposure" min="0.4" max="2" step="0.05"></label>
+      <label class="check"><input type="checkbox" id="rAo"> Ombres de contact</label>
+      <label class="check"><input type="checkbox" id="rSoft"> Ombres douces haute définition</label>
+      <button type="button" class="btn btn-wide" id="rSnapshot"><i class="ti ti-camera"></i> Enregistrer l’image (PNG)</button>
+    </div>
+    <p class="hint" id="standard-hint">Le mode Éditeur reste rapide et lisible. Passe en Réaliste pour voir la lumière du jour, les ombres et vos sources lumineuses.</p>
+  </div>
+  <div class="pop pop--palette" id="pop-palette" hidden>
+    <div class="palette" id="paletteHolder" role="group" aria-label="Couleurs"></div>
+  </div>
+
+  <dialog id="shortcuts" class="modal">
+    <div class="modal-head"><h2>Raccourcis clavier</h2><button class="icon-btn" data-close type="button" aria-label="Fermer"><i class="ti ti-x"></i></button></div>
+    <ul class="shortcuts">
+      <li><kbd>V</kbd> sélection · <kbd>W</kbd> murs · <kbd>O</kbd> poser un objet · <kbd>M</kbd> mesure</li>
+      <li><kbd>Suppr</kbd> supprimer · <kbd>Ctrl</kbd>+<kbd>D</kbd> dupliquer · <kbd>Échap</kbd> quitter l’outil</li>
+      <li><kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd> annuler / rétablir · flèches : déplacer de 1 cm (<kbd>Maj</kbd> : 10 cm)</li>
+      <li>Murs : <kbd>Entrée</kbd> ou double-clic pour terminer, <kbd>Retour arrière</kbd> pour retirer le dernier point, <kbd>Maj</kbd> pour aligner</li>
+      <li>Plan : molette pour zoomer, glisser le fond pour se déplacer (ou <kbd>Espace</kbd> + glisser)</li>
+      <li>3D : glisser un objet pour le déplacer, glisser le fond pour tourner, molette pour zoomer</li>
+    </ul>
+  </dialog>
 
   <dialog id="settings" class="modal">
     <div class="modal-head"><h2>Réglages</h2><button class="icon-btn" data-close type="button" aria-label="Fermer"><i class="ti ti-x"></i></button></div>

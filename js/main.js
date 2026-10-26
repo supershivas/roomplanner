@@ -6,6 +6,7 @@ import { createPlan2d } from './plan2d.js';
 import { createView3d } from './view3d.js';
 import { initPanel } from './panel.js';
 import { initDialogs, closeAllDialogs, toast, say } from './dialogs.js';
+import { initPopovers, closePopovers } from './popover.js';
 import * as actions from './actions.js';
 import { projectForExport, validateProject } from './model.js';
 import { startUpdateCheck, loadChangelog, loadVersion, downloadJSON } from './app-update.js';
@@ -117,6 +118,11 @@ $('btn-grid').addEventListener('click', () => {
 $('btn-fit').addEventListener('click', () => (view === '3d' ? view3d.resetView() : plan.fit()));
 $('btn-reset-view').addEventListener('click', () => view3d.resetView());
 $('btn-snapshot').addEventListener('click', takeSnapshot);
+// « Pièce » : sélectionne la pièce, dont l'inspecteur montre les réglages (ou la crée si elle n'existe pas).
+$('btn-room').addEventListener('click', () => {
+  if (store.ui.selected === 'room') store.clearSelection();
+  else { store.setTool('select'); store.select({ id: 'room', wall: store.ui.wall }); }
+});
 
 // ── Annuler / rétablir ─────────────────────────────────────────────────────
 function syncHistoryButtons() {
@@ -140,7 +146,9 @@ store.subscribe((kind) => {
 const menus = new MenuBar([
   { triggerId: 'menu-file-trigger', dropdownId: 'menu-file-dropdown' },
   { triggerId: 'menu-edit-trigger', dropdownId: 'menu-edit-dropdown' },
+  { triggerId: 'menu-help-trigger', dropdownId: 'menu-help-dropdown' },
 ]);
+menus.onAction('menu-shortcuts', () => $('shortcuts').showModal());
 menus.onAction('menu-new', async () => { if (await actions.newPlan()) { if (view !== 'plan') setView('plan'); plan.render(); } });
 menus.onAction('menu-open', () => $('open-input').click());
 menus.onAction('menu-save', exportData);
@@ -164,6 +172,7 @@ $('empty-example').addEventListener('click', openExample);
 $('brand').addEventListener('click', (e) => {
   e.preventDefault();
   closeAllDialogs();
+  closePopovers();
   menus.closeAll();
   plan.cancel();
   store.setTool('select');
@@ -229,6 +238,7 @@ window.addEventListener('keydown', (e) => {
 
 // ── Démarrage ──────────────────────────────────────────────────────────────
 initDialogs();
+initPopovers();
 applyTokens();
 store.load();
 initPanel({ onSnapshot: takeSnapshot });

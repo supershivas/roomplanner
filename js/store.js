@@ -19,7 +19,7 @@ let nextId = 1;
 export const store = {
   state: newState(),
   render: defaultRender(), // réglages 3D : hors historique
-  ui: { selected: null, vertex: null, wall: 0, light: null, tool: 'select' },
+  ui: { selected: null, vertex: null, wall: 0, light: null, tool: 'select', addType: 'furniture' },
   history: [],
   future: [],
 

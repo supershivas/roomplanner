@@ -492,7 +492,7 @@ export function createPlan2d(svg) {
       return;
     }
     if (tool === 'object') {
-      const type = document.getElementById('add-type').value;
+      const type = store.ui.addType;
       createObjectAt(snapPoint(p, { noSnap: e.altKey }), type, { snapToWall: true });
       store.setTool('select');
       return;
@@ -707,7 +707,18 @@ export function createPlan2d(svg) {
     }
   });
 
-  new ResizeObserver(() => render()).observe(svg);
+  // La largeur change quand l'inspecteur apparaît : on garde l'échelle et le bord gauche du plan.
+  let lastWidth = 0;
+  new ResizeObserver(() => {
+    const { cw } = size();
+    if (lastWidth && cw !== lastWidth) {
+      const w = view.w * (cw / lastWidth);
+      view.cx += (w - view.w) / 2;
+      view.w = w;
+    }
+    lastWidth = cw;
+    render();
+  }).observe(svg);
 
   return {
     render,

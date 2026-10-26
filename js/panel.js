@@ -1,10 +1,17 @@
-// Panneau latéral : ajout, propriétés, pièce, éclairage, rendu 3D et liste des éléments.
+// Inspecteur (propriétés de la sélection), catalogue d'ajout, liste des éléments et réglages du rendu 3D.
 import { store } from './store.js';
 import {
   OBJECT_TYPES, LIGHT_TYPES, FLOORS, PALETTE, AMBIANCES, WALL_DEFAULT, LIGHT_DEFAULT_COLOR, clamp,
   itemHeight, itemElevation, snapOpeningToWall, isOpening,
 } from './model.js';
 import { addObjectAtCenter, duplicateSelected, deleteSelected, makeRectangle, addVertex, removeVertex, addLight } from './actions.js';
+import { openPopover, closePopovers } from './popover.js';
+
+const TYPE_ICONS = {
+  furniture: 'box', table: 'table', chair: 'armchair', shelf: 'books', door: 'door', window: 'window', appliance: 'wash-machine',
+  column: 'circle-square', note: 'message-circle', patio: 'door-enter', ironing: 'layout-rows', dresser: 'stack-2', radiator: 'flame', desklamp: 'lamp',
+};
+const LIGHT_ICONS = { spot: 'bulb', lamp: 'lamp', ambient: 'sun' };
 
 const $ = (id) => document.getElementById(id);
 const fmtHour = (h) => `${String(Math.floor(h)).padStart(2, '0')} h ${String(Math.round((h % 1) * 60)).padStart(2, '0')}`;
@@ -17,50 +24,73 @@ export function initPanel({ onSnapshot }) {
     const sel = $(id);
     sel.replaceChildren(...entries.map(([value, label]) => new Option(label, value)));
   };
-  fillSelect('add-type', Object.entries(OBJECT_TYPES).map(([k, v]) => [k, v.label]));
   fillSelect('pType', Object.entries(OBJECT_TYPES).map(([k, v]) => [k, v.label]));
-  fillSelect('lightTypeCreate', Object.entries(LIGHT_TYPES).map(([k, v]) => [k, v.label]));
   fillSelect('floorType', Object.entries(FLOORS));
 
-  // ── Palettes de couleurs ──
-  const palettes = [];
-  function buildPalette(holderId, nameId, get, set) {
-    const holder = $(holderId);
-    holder.replaceChildren(...PALETTE.map((p) => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'swatch';
-      b.style.backgroundColor = p.hex;
-      b.title = p.name;
-      b.setAttribute('aria-label', p.name);
-      b.dataset.color = p.hex;
-      b.addEventListener('click', () => { set(p.hex); });
-      return b;
-    }));
-    palettes.push(() => {
+  // ── Couleurs : un bouton par champ, une palette partagée ──
+  const colorButtons = [];
+  const holder = $('paletteHolder');
+  holder.replaceChildren(...PALETTE.map((p) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'swatch';
+    b.style.backgroundColor = p.hex;
+    b.title = p.name;
+    b.setAttribute('aria-label', p.name);
+    b.dataset.color = p.hex;
+    return b;
+  }));
+  function colorButton(id, get, set) {
+    const btn = $(id);
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       const current = get();
-      holder.querySelectorAll('.swatch').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.color === current)));
-      const entry = PALETTE.find((p) => p.hex === current);
-      $(nameId).textContent = entry ? entry.name : '';
+      holder.querySelectorAll('.swatch').forEach((sw) => {
+        sw.setAttribute('aria-pressed', String(sw.dataset.color === current));
+        sw.onclick = () => { set(sw.dataset.color); closePopovers(); };
+      });
+      openPopover($('pop-palette'), btn);
+    });
+    colorButtons.push(() => {
+      const current = get();
+      btn.querySelector('.color-btn__dot').style.background = current || 'transparent';
+      btn.querySelector('.color-btn__name').textContent = PALETTE.find((p) => p.hex === current)?.name ?? '';
     });
   }
-  buildPalette('pColorPalette', 'pColorName',
-    () => (store.selectedItem?.color ?? store.selectedColumn?.color),
-    (hex) => {
-      const it = store.selectedItem;
-      const col = store.selectedColumn;
-      if (!it && !col) return;
-      store.checkpoint();
-      if (it) it.color = hex; else { col.color = hex; col.colorLinked = false; }
-      store.changed();
-    });
-  buildPalette('wallColorPalette', 'wallColorName', () => store.state.wallColor, (hex) => {
+  colorButton('pColorBtn', () => (store.selectedItem?.color ?? store.selectedColumn?.color), (hex) => {
+    const it = store.selectedItem;
+    const col = store.selectedColumn;
+    if (!it && !col) return;
+    store.checkpoint();
+    if (it) it.color = hex; else { col.color = hex; col.colorLinked = false; }
+    store.changed();
+  });
+  colorButton('wallColorBtn', () => store.state.wallColor, (hex) => {
     store.checkpoint();
     store.state.wallColor = hex;
     store.state.columns.forEach((c) => { if (c.colorLinked === true) c.color = hex; });
     store.changed();
   });
-  buildPalette('pLightColorPalette', 'pLightColorName', () => store.selectedLight?.color, (hex) => updateLight('color', hex));
+  colorButton('pLightColorBtn', () => store.selectedLight?.color, (hex) => updateLight('color', hex));
+
+  // ── Catalogue d'ajout ──
+  function catalogButton(icon, label, onClick) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'catalog__btn';
+    const i = document.createElement('i');
+    i.className = `ti ti-${icon}`;
+    const t = document.createElement('span');
+    t.textContent = label;
+    b.append(i, t);
+    b.addEventListener('click', () => { closePopovers(); onClick(); });
+    return b;
+  }
+  $('catalog-items').replaceChildren(...Object.entries(OBJECT_TYPES).map(([type, def]) => catalogButton(TYPE_ICONS[type], def.name, () => {
+    store.ui.addType = type;
+    addObjectAtCenter(type);
+  })));
+  $('catalog-lights').replaceChildren(...Object.entries(LIGHT_TYPES).map(([type, def]) => catalogButton(LIGHT_ICONS[type], def.short, () => addLight(type))));
 
   // ── Verrouillage ──
   $('lockBtn').addEventListener('click', () => store.toggleLock());
@@ -77,15 +107,14 @@ export function initPanel({ onSnapshot }) {
     const b = $(lockBtnId);
     b.setAttribute('aria-pressed', String(locked));
     b.querySelector('i').className = `ti ${locked ? 'ti-lock' : 'ti-lock-open'}`;
-    const label = b.querySelector('span');
-    label.textContent = lockBtnId === 'roomLockBtn'
+    const text = lockBtnId === 'roomLockBtn'
       ? (locked ? 'Déverrouiller les murs' : 'Verrouiller les murs')
       : (locked ? 'Déverrouiller' : 'Verrouiller');
+    b.title = text;
+    b.setAttribute('aria-label', text);
   }
 
-  // ── Ajout ──
-  $('add-btn').addEventListener('click', () => addObjectAtCenter($('add-type').value));
-  $('addLight').addEventListener('click', () => addLight($('lightTypeCreate').value));
+  $('lightDupBtn').addEventListener('click', duplicateSelected);
   $('duplicateBtn').addEventListener('click', duplicateSelected);
   $('deleteBtn').addEventListener('click', deleteSelected);
   $('deleteLightBtn').addEventListener('click', deleteSelected);
@@ -217,7 +246,7 @@ export function initPanel({ onSnapshot }) {
   $('pLightEnabled').addEventListener('change', () => updateLight('enabled', $('pLightEnabled').checked));
 
   // ── Rendu 3D (préférences : hors historique) ──
-  document.querySelectorAll('#render-mode [data-mode], #mode-seg [data-mode]').forEach((b) => {
+  document.querySelectorAll('#mode-seg [data-mode]').forEach((b) => {
     b.addEventListener('click', () => store.setRender({ mode: b.dataset.mode }));
   });
   document.querySelectorAll('#ambiance [data-ambiance]').forEach((b) => {
@@ -239,8 +268,15 @@ export function initPanel({ onSnapshot }) {
     const it = store.selectedItem;
     const col = store.selectedColumn;
     const has = !!(it || col);
+    const l0 = store.selectedLight;
+    const showRoom = ui.selected === 'room';
     $('props').hidden = !has;
-    $('roomPanel').hidden = has;
+    $('lightProps').hidden = !l0;
+    $('roomPanel').hidden = !showRoom;
+    // Le panneau n'existe que pour la sélection : sans elle, le plan prend toute la largeur.
+    $('inspector').hidden = !(has || l0 || showRoom);
+    $('stage').parentElement.classList.toggle('no-side', $('inspector').hidden);
+    $('btn-room').setAttribute('aria-pressed', String(showRoom));
     $('propTypeField').hidden = !it;
     $('propDimensions').hidden = !it;
     $('propPosition').hidden = !it;
@@ -250,6 +286,7 @@ export function initPanel({ onSnapshot }) {
     $('columnShapeField').hidden = !(it && it.type === 'column');
     $('doorOptions').hidden = !(it && it.type === 'door');
     $('p-type-label').textContent = it ? OBJECT_TYPES[it.type].label : col ? 'Colonne (contour)' : '';
+    $('light-type-label').textContent = l0 ? LIGHT_TYPES[l0.type].label : '';
     if (has) {
       const src = it || col;
       setValue('pName', src.name || '');
@@ -274,15 +311,15 @@ export function initPanel({ onSnapshot }) {
     // Pièce
     setValue('wallHeight', Math.round(state.wallHeight));
     setValue('floorType', state.floor);
+    $('roomCreate').hidden = state.room.length >= 3;
     $('room-summary').textContent = state.room.length >= 3
-      ? `${state.room.length} sommets. Clique un mur pour le sélectionner, glisse un sommet pour le déplacer.`
+      ? `${state.room.length} sommets · glisse un sommet pour le déplacer.`
       : 'Aucune pièce. Dessine un contour avec l’outil Murs, ou crée un rectangle.';
     $('removeVertexBtn').disabled = !(ui.selected === 'room' && ui.vertex !== null && state.room.length > 3);
     $('addVertexBtn').disabled = state.room.length < 3;
 
     // Lumières
-    const l = store.selectedLight;
-    $('lightProps').hidden = !l;
+    const l = l0;
     if (l) {
       setValue('pLightName', l.name || '');
       setValue('pLightIntensity', Number(l.intensity) || 0);
@@ -295,7 +332,7 @@ export function initPanel({ onSnapshot }) {
       $('lightPositionFields').hidden = l.type === 'ambient';
       $('lightAngleField').hidden = l.type !== 'spot';
     }
-    palettes.forEach((refresh) => refresh());
+    colorButtons.forEach((refresh) => refresh());
     syncLists();
     applyLock('props', 'lockBtn', has && !!(it || col)?.locked);
     applyLock('roomPanel', 'roomLockBtn', state.roomLocked === true);
@@ -331,19 +368,18 @@ export function initPanel({ onSnapshot }) {
   function syncLists() {
     const { state } = store;
     const rows = [
-      ...state.items.map((it) => listButton(it.name, `${Math.round(it.w)}×${Math.round(it.d)}`, it.color || OBJECT_TYPES[it.type].color, ui.selected === it.id, () => { store.setTool('select'); store.select({ id: it.id }); }, it.locked === true)),
-      ...state.columns.map((c) => listButton(c.name, 'contour', c.color || WALL_DEFAULT, ui.selected === c.id, () => { store.setTool('select'); store.select({ id: c.id }); }, c.locked === true)),
+      ...state.items.map((it) => listButton(it.name, `${Math.round(it.w)}×${Math.round(it.d)}`, it.color || OBJECT_TYPES[it.type].color, ui.selected === it.id, () => { closePopovers(); store.setTool('select'); store.select({ id: it.id }); }, it.locked === true)),
+      ...state.columns.map((c) => listButton(c.name, 'contour', c.color || WALL_DEFAULT, ui.selected === c.id, () => { closePopovers(); store.setTool('select'); store.select({ id: c.id }); }, c.locked === true)),
     ];
     $('itemList').replaceChildren(...rows);
-    $('emptyList').hidden = rows.length > 0;
-    const lights = state.lights.map((l) => listButton(l.name || LIGHT_TYPES[l.type].name, LIGHT_TYPES[l.type].short, l.color || LIGHT_DEFAULT_COLOR, ui.light === l.id, () => store.select({ light: l.id }), l.locked === true));
+    const lights = state.lights.map((l) => listButton(l.name || LIGHT_TYPES[l.type].name, LIGHT_TYPES[l.type].short, l.color || LIGHT_DEFAULT_COLOR, ui.light === l.id, () => { closePopovers(); store.select({ light: l.id }); }, l.locked === true));
     $('lightList').replaceChildren(...lights);
-    $('emptyLightList').hidden = lights.length > 0;
+    $('emptyList').hidden = rows.length + lights.length > 0;
   }
 
   function syncRender() {
     const r = store.render;
-    document.querySelectorAll('#render-mode [data-mode], #mode-seg [data-mode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === r.mode)));
+    document.querySelectorAll('#mode-seg [data-mode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === r.mode)));
     document.querySelectorAll('#ambiance [data-ambiance]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.ambiance === r.ambiance)));
     $('realistic-opts').hidden = r.mode !== 'realistic';
     $('standard-hint').hidden = r.mode === 'realistic';
